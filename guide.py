@@ -27,7 +27,7 @@ def main():
         base_path = input(f'{Color.GREEN}>{Color.RESET}').strip()
         print(f'{Color.CYAN}●{Color.RESET}助理将使用目录: {Color.CYAN}{base_path}{Color.RESET}。')
     elif lang == 'en_us':
-        print(f'{Color.MAGENTA}●{Color.RESET}What {Color.CYAN}working directory{Color.RESET} do you want the assistant to use? Please enter the {Color.CYAN}absolute path{Color.RESET}, using '/' to separate.')
+        print(f'{Color.MAGENTA}●{Color.RESET}What {Color.CYAN}working directory{Color.RESET} do you want the assistant to use? Please enter the {Color.CYAN}absolute path{Color.RESET}, using "/" to separate.')
         base_path = input(f'{Color.GREEN}>{Color.RESET}').strip()
         print(f'{Color.CYAN}●{Color.RESET}Agent will use directory: {Color.CYAN}{base_path}{Color.RESET}。')
     
@@ -45,10 +45,10 @@ def main():
         print(f'{Color.MAGENTA}●{Color.RESET}When working as an assistant, you might be asked for some {Color.CYAN}operation instructions{Color.RESET}. Do you want to get {Color.CYAN}your approval{Color.RESET} before the instructions are executed? (y/n)')
         t = input(f'{Color.GREEN}>{Color.RESET}').strip()
         if t == 'y':
-            tbreak = True
+            cmd_check = True
             print(f'{Color.CYAN}●{Color.RESET}The assistant will ask you for instructions and carry them out once approved.')
         else:
-            tbreak = False
+            cmd_check = False
             print(f'{Color.CYAN}●{Color.RESET}The assistant will follow the instructions directly.')
 
     print(f'{Color.WHITE}{"─" * (os.get_terminal_size().columns-1)}{Color.RESET}')
@@ -135,7 +135,7 @@ def main():
         print(f'{Color.CYAN}●{Color.RESET}API KEY: {Color.RED}{config['API_KEY']}{Color.RESET}')
         print(f'{Color.CYAN}●{Color.RESET}BASE URL: {Color.RED}{config['BASE_URL']}{Color.RESET}')
         print(f'{Color.CYAN}●{Color.RESET}MODEL NAME: {Color.RED}{config['MODEL']}{Color.RESET}')
-        print(f'{Color.CYAN}●{Color.RESET}working directory: {Color.RED}{config['base_path]']}{Color.RESET}')
+        print(f'{Color.CYAN}●{Color.RESET}working directory: {Color.RED}{config['base_path']}{Color.RESET}')
         print(f'{Color.CYAN}●{Color.RESET}language: {Color.RED}{config['lang']}{Color.RESET}')
         print(f'{Color.CYAN}●{Color.RESET}intercept duplicate commands: {Color.RED}{'YES' if config['break'] else 'NO'}{Color.RESET}')
         print(f'{Color.CYAN}●{Color.RESET}check operation instructions: {Color.RED}{'YES' if config['break'] else 'NO'}{Color.RESET}')
@@ -147,7 +147,7 @@ def main():
     if lang == 'zh_cn':
         print(f'已生成配置文件。\n欢迎使用突触助理。')
     elif lang == 'en_us':
-        print(f'Configuration file created。\nwelcome to S{Color.WHITE}ynapse {Color.CYAN}A{Color.WHITE}gent.')
+        print(f'Configuration file created。\nwelcome to {Color.CYAN}S{Color.WHITE}ynapse {Color.CYAN}A{Color.WHITE}gent.')
     time.sleep(1)
 
 def print_banner():
