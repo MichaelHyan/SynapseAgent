@@ -1,0 +1,7 @@
+{
+    "agent_base":{
+        "persona":"agent_base",
+        "skills":"skill_base",
+        "extra":"agent_base"
+    }
+}
