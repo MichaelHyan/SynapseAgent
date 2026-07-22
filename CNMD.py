@@ -215,7 +215,10 @@ class CNMD():
             self._correction(ori_cmd)
     
     def _reset(self):
+        with open('config.json',encoding='utf-8') as f:
+            self.config = json.load(f)
         self.TIME_STAMP = round(time.time())
+        self.prompt = prompt.load('agent_base')
         self.nodelist['init'] = [0]
         self.messages = [
             {
