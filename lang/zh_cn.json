@@ -6,6 +6,8 @@
     "cnmd.base.cmd":"[D] Agent想要执行这些指令\n输入'#execute'或'#e'来批准运行\n",
     "cnmd.node.savecomplete":"[U] 节点已保存: ",
     "cnmd.node.loadcomplete":"[U] 节点已加载: ",
+    "cnmd.node.delcomplete":"[U] 节点已删除: ",
+    "cnmd.node.delunsuccess":"[U] 节点不存在",
     "cnmd.node.nodenotfound":"[U] 未找到节点",
     "cnmd.node.nodelist":"[U] 节点列表:\n",
     "cnmd.log.savecomplete":"[U] 已保存本地记忆",

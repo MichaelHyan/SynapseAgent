@@ -57,6 +57,7 @@ class CNMD():
 1. 节点操作 (#node)
 #node save <节点名称>      - 保存当前对话状态到指定节点
 #node load <节点名称>      - 从内存中加载指定节点的对话状态
+#node delete <节点名称>    - 删除指定节点的索引
 #node list                - 列出所有已保存的节点
 #node backward <轮数>     - 回退指定轮数的对话（默认回退1轮）
 #node backwardms          - 回退一次事件操作
@@ -118,13 +119,25 @@ class CNMD():
             if cmd[1] == 'save':
                 self.nodelist[cmd[2]] = copy.deepcopy(self.msg)
                 self.msg_stack.append(f'{lang.lang['cnmd.node.savecomplete']}{cmd[2]}')
+                return
+            if cmd[1] == 'delete':
+                tlist = {k: v for k, v in self.nodelist.items() if k != cmd[2]}
+                if self.nodelist == tlist:
+                    self.msg_stack.append(f'{lang.lang['cnmd.node.delunsuccess']}')
+                    return
+                else:
+                    self.nodelist = copy.deepcopy(tlist)
+                    self.msg_stack.append(f'{lang.lang['cnmd.node.delcomplete']}{cmd[2]}')
+                    return
             elif cmd[1] == 'load':
                 temp = self.nodelist.get(cmd[2])
                 if temp:
                     self.msg = copy.deepcopy(self.nodelist.get(cmd[2]))
                     self.msg_stack.append(f'{lang.lang['cnmd.node.loadcomplete']}{cmd[2]}')
+                    return
                 else:
                     self.msg_stack.append(f'{lang.lang['cnmd.node.nodenotfound']}')
+                    return
             elif cmd[1] == 'savef':
                 temp = cmd[2]
                 if temp:
@@ -136,10 +149,13 @@ class CNMD():
                         with open(f'./logs/{temp}_tool.json','w',encoding='utf-8') as f:
                             json.dump(self.toolcall,f,indent=4,ensure_ascii=False)
                         self.msg_stack.append(lang.lang['cnmd.log.savecomplete'])
+                        return
                     except Exception as e:
                         self.msg_stack.append(lang.lang['cnmd.log.filenotfound'])
+                        return
                 else:
                     self.msg_stack.append(lang.lang['cnmd.log.filenotfound'])
+                    return
             elif cmd[1] == 'loadf':
                 temp = cmd[2]
                 if temp:
@@ -151,15 +167,19 @@ class CNMD():
                         with open(f'./logs/{temp}_tool.json','r',encoding='utf-8') as f:
                             self.toolcall = json.load(f)
                         self.msg_stack.append(lang.lang['cnmd.log.loadcomplete'])
+                        return
                     except Exception as e:
                         self.msg_stack.append(lang.lang['cnmd.log.filenotfound'])
+                        return
                 else:
                     self.msg_stack.append(lang.lang['cnmd.log.filenotfound'])
+                    return
             elif cmd[1] == 'list':
                 temp = f'{lang.lang['cnmd.node.nodelist']}\n'
                 for key,value in self.nodelist.items():
                     temp += f'{key} [{self._compress_number(value)}]\n'
                 self.msg_stack.append(temp.strip())
+                return
             elif cmd[1] == 'backward':
                 if len(self.msg) == 1:
                     self.msg_stack.append(lang.lang['cnmd.node.backwardunable'])
@@ -167,35 +187,47 @@ class CNMD():
                 try:
                     self.msg = self.msg[:-2*int(cmd[2])]
                     self.msg_stack.append(f'{lang.lang['cnmd.node.backwardcount']}{cmd[2]}')
+                    return
                 except:
                     self.msg = self.msg[:-2]
                     self.msg_stack.append(lang.lang['cnmd.node.backward'])
+                    return
             elif cmd[1] == 'backwardms':
                 self.msg = copy.deepcopy(self.mstemp)
                 self.msg_stack.append(lang.lang['cnmd.node.backward'])
+                return
             else:
                 self._correction(ori_cmd)
+                return
         elif cmd[0] == '#help':
             self.msg_stack.append(self.help_text)
+            return
         elif cmd[0] == '#bot':
             if cmd[1] == 'reasoning':
                 if cmd[2] == 'on' or cmd[2] == 'true' or cmd[2] == 'True' or cmd[2] == '1':
                     self.allow_reasoning = True
                     self.msg_stack.append(lang.lang['cnmd.bot.reasoningon'])
+                    return
                 elif cmd[2] == 'off' or cmd[2] == 'false' or cmd[2] == 'False' or cmd[2] == '0':
                     self.allow_reasoning = False
                     self.msg_stack.append(lang.lang['cnmd.bot.reasoningoff'])
+                    return
                 else:
                     self._correction(ori_cmd)
+                    return
             elif cmd[1] == 'prompt':
                 self.set_prompt(cmd[2])
+                return
             elif cmd[1] == 'reset':
                 self._reset()
+                return
             elif cmd[1] == 'reload':
                 bot.reload()
                 self.msg_stack.append(lang.lang['cnmd.bot.reload'])
+                return
             else:
                 self._correction(ori_cmd)
+                return
         elif cmd[0] == '#backup':
             fileedit.backup(self.config['base_path'])
             self.msg_stack.append(lang.lang['cnmd.base.backup'])

@@ -6,6 +6,8 @@
     "cnmd.base.cmd":"[D] Agent wants to execute following commands.\nEnter '#execute' or '#e' to run.\n",
     "cnmd.node.savecomplete":"[U] node save complete: ",
     "cnmd.node.loadcomplete":"[U] node load complete: ",
+    "cnmd.node.delcomplete":"[U] node delete complete: ",
+    "cnmd.node.delunsuccess":"[U] node doesn`t exist",
     "cnmd.node.nodenotfound":"[U] node not found",
     "cnmd.node.nodelist":"[U] node not list:\n",
     "cnmd.log.savecomplete":"[U] memory save to local complete",

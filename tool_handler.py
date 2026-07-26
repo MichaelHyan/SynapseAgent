@@ -1,6 +1,11 @@
 from tools import fileedit,runcmd,webgrab,timer,memory,skills,lang
 import json,threading,time
-def tool(function):
+def tool(function:str):
+    function = function.replace('<tool_call>','').replace('</tool_call>','')
+    if function[0] == '\n':
+        function = function[1:]
+    if function[-1] == '\n':
+        function = function[:-1]
     try:
         function,args = function.strip().split(maxsplit=1)
     except:
