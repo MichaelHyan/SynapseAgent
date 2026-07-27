@@ -1,11 +1,11 @@
 from tools import fileedit,memory
 from prompt_loader import prompt
-import tool_handler as tool
+import tools.tool_handler as tool
 import tools.bot as bot
 import tools.lang as lang
 import tools.tag_parser as tag_parser
 import copy,json,time,threading,os
-import guide
+import tools.guide as guide
 if not os.path.exists('./logs'):
     os.makedirs('./logs')
 if not os.path.exists('./bak'):
@@ -247,6 +247,7 @@ class CNMD():
             self._correction(ori_cmd)
     
     def _reset(self):
+        bot.reload()
         with open('config.json',encoding='utf-8') as f:
             self.config = json.load(f)
         self.TIME_STAMP = round(time.time())

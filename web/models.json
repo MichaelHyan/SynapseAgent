@@ -1,0 +1,8 @@
+[
+    {
+        "name": "mimo-v2.5",
+        "api_key": "sk-cfobhkgdry4ljl44bc5fzorkkatkx8mjwnomldd9pd8g4iu1",
+        "base_url": "https://api.xiaomimimo.com/v1",
+        "model": "mimo-v2.5-pro"
+    }
+]

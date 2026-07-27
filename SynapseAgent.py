@@ -1,4 +1,4 @@
-import guide
+import tools.guide as guide
 import CNMD
 import threading, time, copy, os, sys, argparse
 from tools import lang

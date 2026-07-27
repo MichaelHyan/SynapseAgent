@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SynapseAgent</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.4/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="top-bar-left">
+            <div class="top-title"><i class="fas fa-project-diagram"></i><span>SynapseAgent</span></div>
+        </div>
+        <div class="top-bar-center">
+            <div id="processing-bar" class="processing-bar"><div class="processing-fill"></div></div>
+        </div>
+        <div class="top-bar-right">
+            <span class="status-dot" id="status-dot"></span>
+            <span class="status-text" id="status-text">连接中...</span>
+            <button class="icon-btn" id="btn-reset-layout" title="重置布局"><i class="fas fa-window-restore"></i></button>
+            <button class="icon-btn" id="btn-sound" title="提示音"><i class="fas fa-volume-up"></i></button>
+            <button class="icon-btn" id="btn-theme" title="主题色"><i class="fas fa-palette"></i></button>
+            <button class="icon-btn" id="btn-settings" title="设置"><i class="fas fa-cog"></i></button>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <div class="panel left-column" id="left-col">
+            <div class="left-inner">
+                <div class="panel-section node-graph-panel" id="node-panel">
+                    <div class="panel-header">
+                        <i class="fas fa-sitemap"></i><span>节点图</span>
+                        <div class="panel-header-actions">
+                            <button class="icon-btn-sm" id="btn-node-zoomout" title="缩小"><i class="fas fa-search-minus"></i></button>
+                            <button class="icon-btn-sm" id="btn-node-zoomin" title="放大"><i class="fas fa-search-plus"></i></button>
+                            <button class="icon-btn-sm" id="btn-node-fit" title="适应窗口"><i class="fas fa-compress-arrows-alt"></i></button>
+                            <button class="icon-btn-sm" id="btn-node-refresh" title="刷新"><i class="fas fa-sync-alt"></i></button>
+                            <button class="icon-btn-sm" id="btn-node-save" title="新建节点"><i class="fas fa-plus"></i></button>
+                            <button class="icon-btn-sm" id="btn-node-reset" title="清空节点"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                    <div class="panel-body" id="node-tree" style="padding:0;overflow:hidden">
+                        <svg id="node-svg" width="100%" height="100%" style="cursor:grab"><g id="node-svg-group"></g></svg>
+                        <div class="node-empty-hint" id="node-empty-hint"><i class="fas fa-circle-notch"></i><span>暂无节点</span><small>使用 #node save 创建节点</small></div>
+                    </div>
+                </div>
+                <div class="resize-handle resize-handle-v" data-resize="node-quick"></div>
+                <div class="panel-section quick-buttons-panel" id="quick-panel">
+                    <div class="panel-header"><i class="fas fa-bolt"></i><span>快捷按钮</span></div>
+                    <div class="panel-body" id="quick-buttons">
+                        <button class="quick-btn emergency" id="btn-pause"><i class="fas fa-stop-circle"></i> 急停</button>
+                        <button class="quick-btn" data-cmd="#help"><i class="fas fa-question-circle"></i> 帮助</button>
+                        <button class="quick-btn" id="btn-quick-save-node"><i class="fas fa-plus-circle"></i> 新建节点</button>
+                        <button class="quick-btn" data-cmd="#node list"><i class="fas fa-list"></i> 节点列表</button>
+                        <button class="quick-btn" data-cmd="#node backward 1"><i class="fas fa-step-backward"></i> 回退1轮</button>
+                        <button class="quick-btn" data-cmd="#node backward 3"><i class="fas fa-fast-backward"></i> 回退3轮</button>
+                        <button class="quick-btn" data-cmd="#node backwardms"><i class="fas fa-undo"></i> 回退事件</button>
+                        <button class="quick-btn" data-cmd="#backup"><i class="fas fa-database"></i> 备份</button>
+                        <button class="quick-btn" data-cmd="#bot reset"><i class="fas fa-power-off"></i> 重置对话</button>
+                        <button class="quick-btn" data-cmd="#bot reload"><i class="fas fa-redo"></i> 重载模型</button>
+                        <button class="quick-btn" data-cmd="#bot reasoning on"><i class="fas fa-brain"></i> 思维链ON</button>
+                        <button class="quick-btn" data-cmd="#bot reasoning off"><i class="fas fa-brain"></i> 思维链OFF</button>
+                        <button class="quick-btn" data-cmd="#mem save"><i class="fas fa-save"></i> 保存记忆</button>
+                        <button class="quick-btn" data-cmd="#mem analyse"><i class="fas fa-chart-bar"></i> 分析记忆</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="resize-handle resize-handle-h" data-resize="left-center"></div>
+
+        <div class="panel center-column" id="center-col">
+            <div class="panel-section chat-panel">
+                <div class="panel-header">
+                    <i class="fas fa-comments"></i><span>聊天区</span>
+                    <div class="panel-header-actions">
+                        <button class="icon-btn-sm" id="btn-chat-clear" title="清空"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                </div>
+                <div class="panel-body chat-body" id="chat-messages">
+                    <div class="chat-welcome" id="chat-welcome">
+                        <div class="welcome-icon" id="welcome-logo"><img src="/static/logo.jpg" alt="SynapseAgent" style="width:100%;height:100%;object-fit:cover;border-radius:16px"></div>
+                        <h2>SynapseAgent</h2>
+                        <p>Think Backward, And Re:Start!</p>
+                        <p class="welcome-hint">赞美万机之神欧姆弥赛亚</p>
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <div class="chat-input-wrapper">
+                        <textarea id="chat-input" placeholder="输入消息..." rows="1"></textarea>
+                        <div class="chat-input-actions">
+                            <button class="send-btn" id="btn-send" title="发送 (Enter)"><i class="fas fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                    <div class="chat-input-hints">
+                        <span><i class="fas fa-keyboard"></i> Enter 发送</span>
+                        <span><kbd>?</kbd> 快捷键</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="resize-handle resize-handle-h" data-resize="center-right"></div>
+
+        <div class="panel right-column" id="right-col">
+            <div class="panel-section controls-panel">
+                <div class="panel-header"><i class="fas fa-sliders-h"></i><span>控件区</span></div>
+                <div class="panel-body" id="controls-area">
+                    <div class="control-group">
+                        <label class="control-label"><i class="fas fa-folder-open"></i> 工作路径</label>
+                        <div class="control-input-row">
+                            <input type="text" id="config-base-path" class="control-input" placeholder="base_path">
+                            <button class="control-btn accent" id="btn-reset-path"><i class="fas fa-undo"></i> 重设</button>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label"><i class="fas fa-microchip"></i> 模型配置</label>
+                        <div class="control-info">
+                            <div class="info-row"><span class="info-key">Model</span><span class="info-val" id="info-model">-</span></div>
+                            <div class="info-row"><span class="info-key">Base URL</span><span class="info-val" id="info-url">-</span></div>
+                        </div>
+                        <div class="model-switcher" id="model-switcher"></div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label"><i class="fas fa-user-circle"></i> 人设</label>
+                        <div class="control-input-row">
+                            <select id="prompt-select" class="control-select"></select>
+                            <button class="control-btn" id="btn-set-prompt"><i class="fas fa-exchange-alt"></i> 切换</button>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label"><i class="fas fa-brain"></i> 系统选项</label>
+                        <div class="toggle-row" style="margin-bottom:6px">
+                            <span>输出思考显示</span>
+                            <label class="toggle-switch"><input type="checkbox" id="toggle-reasoning"><span class="toggle-slider"></span></label>
+                        </div>
+                        <div class="toggle-row" style="margin-bottom:6px">
+                            <span>重复指令中断</span>
+                            <label class="toggle-switch"><input type="checkbox" id="toggle-break"><span class="toggle-slider"></span></label>
+                        </div>
+                        <div class="toggle-row" style="margin-bottom:6px">
+                            <span>指令确认</span>
+                            <label class="toggle-switch"><input type="checkbox" id="toggle-cmdcheck"><span class="toggle-slider"></span></label>
+                        </div>
+                        <div class="toggle-row">
+                            <span>启用日志</span>
+                            <label class="toggle-switch"><input type="checkbox" id="toggle-log"><span class="toggle-slider"></span></label>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label"><i class="fas fa-puzzle-piece"></i> 技能</label>
+                        <div class="skills-list" id="skills-list"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-section file-panel">
+                <div class="panel-header">
+                    <i class="fas fa-folder-tree"></i><span>文件管理</span>
+                    <div class="panel-header-actions">
+                        <button class="icon-btn-sm" id="btn-file-home" title="根目录"><i class="fas fa-home"></i></button>
+                        <button class="icon-btn-sm" id="btn-file-up" title="上级"><i class="fas fa-arrow-up"></i></button>
+                        <button class="icon-btn-sm" id="btn-file-refresh" title="刷新"><i class="fas fa-sync-alt"></i></button>
+                    </div>
+                </div>
+                <div class="file-breadcrumb" id="file-breadcrumb"><button class="copy-path-btn" id="btn-copy-path" title="复制路径"><i class="fas fa-copy"></i></button></div>
+                <div class="panel-body file-list" id="file-list">
+                    <div class="file-loading"><i class="fas fa-spinner fa-spin"></i><span>加载中...</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置 -->
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal">
+            <div class="modal-header"><h3><i class="fas fa-cog"></i> 设置</h3><button class="icon-btn-sm modal-close-btn"><i class="fas fa-times"></i></button></div>
+            <div class="modal-body">
+                <div class="setting-group"><label>API Key</label><input type="password" id="setting-apikey" class="control-input" placeholder="sk-..."></div>
+                <div class="setting-group"><label>Base URL</label><input type="text" id="setting-url" class="control-input" placeholder="https://api..."></div>
+                <div class="setting-group"><label>Model</label><input type="text" id="setting-model" class="control-input" placeholder="model name"></div>
+                <div class="setting-group"><label>语言</label><select id="setting-lang" class="control-select"><option value="zh_cn">中文</option><option value="en">English</option></select></div>
+            </div>
+            <div class="modal-footer">
+                <button class="control-btn accent" id="btn-save-settings"><i class="fas fa-save"></i> 保存</button>
+                <button class="control-btn" id="btn-cancel-settings">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文件查看 -->
+    <div class="modal-overlay" id="file-viewer-modal">
+        <div class="modal modal-wide">
+            <div class="modal-header"><h3><i class="fas fa-file-code"></i> <span id="file-viewer-title">file.txt</span></h3><button class="icon-btn-sm modal-close-btn"><i class="fas fa-times"></i></button></div>
+            <div class="modal-body"><pre class="file-viewer-content" id="file-viewer-content"></pre></div>
+        </div>
+    </div>
+
+    <!-- 文件编辑 -->
+    <div class="modal-overlay" id="file-editor-modal">
+        <div class="modal modal-wide">
+            <div class="modal-header"><h3><i class="fas fa-edit"></i> <span id="file-editor-title">编辑</span></h3><button class="icon-btn-sm modal-close-btn"><i class="fas fa-times"></i></button></div>
+            <div class="modal-body"><div class="file-editor"><textarea id="file-editor-content"></textarea></div></div>
+            <div class="modal-footer">
+                <button class="control-btn accent" id="btn-save-file"><i class="fas fa-save"></i> 保存</button>
+                <button class="control-btn" id="btn-cancel-file">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 保存节点 -->
+    <div class="modal-overlay" id="node-save-modal">
+        <div class="modal modal-sm">
+            <div class="modal-header"><h3><i class="fas fa-save"></i> 保存节点</h3><button class="icon-btn-sm modal-close-btn"><i class="fas fa-times"></i></button></div>
+            <div class="modal-body"><div class="setting-group"><label>节点名称</label><input type="text" id="node-save-name" class="control-input" placeholder="输入节点名称..."></div></div>
+            <div class="modal-footer">
+                <button class="control-btn accent" id="btn-confirm-node-save"><i class="fas fa-check"></i> 保存</button>
+                <button class="control-btn" id="btn-cancel-node-save">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主题色 -->
+    <div class="modal-overlay" id="theme-modal">
+        <div class="modal modal-sm">
+            <div class="modal-header"><h3><i class="fas fa-palette"></i> 主题色</h3><button class="icon-btn-sm modal-close-btn"><i class="fas fa-times"></i></button></div>
+            <div class="modal-body">
+                <div class="theme-grid">
+                    <button class="theme-swatch" data-color="#569cd6" style="background:#569cd6"></button>
+                    <button class="theme-swatch" data-color="#6a9955" style="background:#6a9955"></button>
+                    <button class="theme-swatch" data-color="#c586c0" style="background:#c586c0"></button>
+                    <button class="theme-swatch" data-color="#ce9178" style="background:#ce9178"></button>
+                    <button class="theme-swatch" data-color="#4ec9b0" style="background:#4ec9b0"></button>
+                    <button class="theme-swatch" data-color="#dcdcaa" style="background:#dcdcaa"></button>
+                    <button class="theme-swatch" data-color="#f44747" style="background:#f44747"></button>
+                    <button class="theme-swatch" data-color="#9cdcfe" style="background:#9cdcfe"></button>
+                </div>
+                <div class="setting-group" style="margin-top:12px">
+                    <label>自定义颜色</label>
+                    <div class="control-input-row">
+                        <input type="color" id="theme-custom-color" class="color-picker" value="#569cd6">
+                        <button class="control-btn" id="btn-apply-custom-color"><i class="fas fa-check"></i> 应用</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 快捷键 -->
+    <div class="modal-overlay" id="shortcuts-modal">
+        <div class="modal modal-sm">
+            <div class="modal-header"><h3><i class="fas fa-keyboard"></i> 快捷键</h3><button class="icon-btn-sm modal-close-btn"><i class="fas fa-times"></i></button></div>
+            <div class="modal-body">
+                <div class="shortcut-list">
+                    <div class="shortcut-item"><kbd>Enter</kbd><span>发送消息</span></div>
+                    <div class="shortcut-item"><kbd>Shift+Enter</kbd><span>换行</span></div>
+                    <div class="shortcut-item"><kbd>/</kbd><span>聚焦输入框</span></div>
+                    <div class="shortcut-item"><kbd>?</kbd><span>显示快捷键</span></div>
+                    <div class="shortcut-item"><kbd>Ctrl+L</kbd><span>清空聊天</span></div>
+                    <div class="shortcut-item"><kbd>Ctrl+,</kbd><span>打开设置</span></div>
+                    <div class="shortcut-item"><kbd>Ctrl+R</kbd><span>重置布局</span></div>
+                    <div class="shortcut-item"><kbd>Esc</kbd><span>关闭弹窗</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="node-context-menu" id="node-context-menu">
+        <div class="ctx-item" data-action="load"><i class="fas fa-sign-in-alt"></i> 加载节点</div>
+        <div class="ctx-item" data-action="input"><i class="fas fa-keyboard"></i> 填入命令</div>
+        <div class="ctx-sep"></div>
+        <div class="ctx-item ctx-danger" data-action="delete"><i class="fas fa-trash"></i> 删除节点</div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="/static/js/app.js"></script>
+    <script>
+    // Logo interactions - standalone, bypasses app.js
+    (function(){
+        var _logoIcon=null,_logoActive=null;
+        var _logoMoveH=null,_logoUpH=null;
+
+        function bindLogoInteractions(){
+            var icon=document.querySelector('.welcome-icon');
+            if(!icon||icon===_logoIcon)return;
+            // Clean up old document listeners
+            if(_logoMoveH){document.removeEventListener('mousemove',_logoMoveH);document.removeEventListener('mouseup',_logoUpH)}
+            _logoIcon=icon;_logoActive=icon;
+            var dragging=false,startX,startY,curX=0,curY=0;
+            var curDeg=0,floatAngle=0,floatRAF=null,isFloating=true,animLocked=false;
+            function applyT(t){_logoActive.style.transform=t}
+            function floatLoop(){if(animLocked||!isFloating||dragging)return;floatAngle+=0.03;applyT('translateY('+Math.sin(floatAngle)*6+'px)');floatRAF=requestAnimationFrame(floatLoop)}
+            function startFloat(){if(floatRAF)cancelAnimationFrame(floatRAF);isFloating=true;floatRAF=requestAnimationFrame(floatLoop)}
+            function stopFloat(){isFloating=false;if(floatRAF){cancelAnimationFrame(floatRAF);floatRAF=null}}
+            function spinAnimate(deg,dur,cb){animLocked=true;stopFloat();var start=performance.now();function step(now){var t=Math.min((now-start)/dur,1),ease=1-Math.pow(1-t,3);applyT('rotate('+(deg*ease)+'deg) scale('+(1+.08*Math.sin(t*Math.PI))+')');if(t<1)requestAnimationFrame(step);else{applyT('rotate('+deg+'deg) scale(1)');if(cb)cb()}}requestAnimationFrame(step)}
+            function coinFlip(dur,cb){animLocked=true;stopFloat();var start=performance.now();function step(now){var t=Math.min((now-start)/dur,1),ease=1-Math.pow(1-t,3),flipDeg=1080*ease,bounce=t<.7?0:Math.sin((t-.7)/.3*Math.PI)*8;applyT('perspective(400px) rotateX('+flipDeg+'deg) translateY('+-bounce+'px)');if(t<1)requestAnimationFrame(step);else{applyT('rotateX(0deg)');if(cb)cb()}}requestAnimationFrame(step)}
+            function settleBack(cb){var start=performance.now(),dur=500;function step(now){var t=Math.min((now-start)/dur,1),ease=1-Math.pow(1-t,3);applyT('translateY('+(6*Math.sin(floatAngle)*ease)+'px)');if(t<1)requestAnimationFrame(step);else{if(cb)cb()}}requestAnimationFrame(step)}
+            startFloat();
+            icon.addEventListener('mousedown',function(e){e.preventDefault();stopFloat();animLocked=true;dragging=true;startX=e.clientX-curX;startY=e.clientY-curY;icon.style.transition='none';icon.style.zIndex='100';icon.style.cursor='grabbing';icon.style.filter='drop-shadow(0 0 15px var(--accent))'});
+            _logoMoveH=function(e){if(!dragging)return;curX=e.clientX-startX;curY=e.clientY-startY;var dist=Math.sqrt(curX*curX+curY*curY),scale=Math.min(1+dist/400,1.2),tilt=Math.max(-20,Math.min(20,curX/8));applyT('translate('+curX+'px,'+curY+'px) scale('+scale+') rotate('+tilt+'deg)')};
+            _logoUpH=function(){if(!dragging)return;dragging=false;if(Math.abs(curX)>5||Math.abs(curY)>5){icon.style.transition='transform .7s cubic-bezier(.25,.46,.45,.94)';applyT('translate(0,0) scale(1) rotate(0deg)');curX=0;curY=0;setTimeout(function(){icon.style.transition='';icon.style.transform='';icon.style.cursor='grab';icon.style.filter='';icon.style.zIndex='';animLocked=false;startFloat()},700)}else{curX=0;curY=0;icon.style.transition='';icon.style.cursor='grab';icon.style.filter='';icon.style.zIndex='';animLocked=false;startFloat()}};
+            document.addEventListener('mousemove',_logoMoveH);document.addEventListener('mouseup',_logoUpH);
+            icon.addEventListener('dblclick',function(e){e.preventDefault();curDeg+=360;if(typeof sndEaster==='function')sndEaster();var total=curDeg/360;if(total%5===0){if(typeof confetti==='function')confetti();if(typeof toast==='function')toast('连续旋转 '+total+' 圈！万机之神赐福！','success')}else{var msgs=['赞美万机之神','欧姆弥赛亚保佑','齿轮转动了','神圣的机械之灵','知识就是力量','万机之神注视着你','钢铁之躯永不腐朽','血肉苦弱，机械飞升'];if(typeof toast==='function')toast(msgs[Math.floor(Math.random()*msgs.length)],'info')}spinAnimate(curDeg,1000,function(){settleBack(function(){animLocked=false;startFloat()})})});
+            icon.addEventListener('contextmenu',function(e){e.preventDefault();if(typeof sndEaster==='function')sndEaster();if(typeof toast==='function')toast('右键彩蛋：硬币翻转！','info');coinFlip(1000,function(){settleBack(function(){animLocked=false;startFloat()})})});
+            icon.addEventListener('mouseenter',function(){if(!dragging&&!animLocked)icon.style.filter='drop-shadow(0 0 10px var(--accent))'});
+            icon.addEventListener('mouseleave',function(){if(!dragging)icon.style.filter=''});
+        }
+        // Run on DOMContentLoaded and after chat clear
+        if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',bindLogoInteractions)}
+        else{bindLogoInteractions()}
+        // Re-bind after chat clear (new icon created)
+        var origInnerHTML=Object.getOwnPropertyDescriptor(Element.prototype,'innerHTML');
+        var observer=new MutationObserver(function(){setTimeout(bindLogoInteractions,50)});
+        observer.observe(document.body,{childList:true,subtree:true});
+    })();
+    </script>
+</body>
+</html>
