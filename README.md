@@ -230,7 +230,7 @@ pip install -r requirements.txt
 python server.py
 ```
 
-或直接双击 `web/start.bat`，浏览器将自动打开 `http://localhost:5001`。
+或直接双击 `start_webui.bat`，浏览器将自动打开 `http://localhost:5001`。
 
 ### 界面布局
 
