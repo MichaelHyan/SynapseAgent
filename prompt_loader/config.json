@@ -3,5 +3,15 @@
         "persona":"agent_base",
         "skills":"skill_base",
         "extra":"agent_base"
+    },
+    "question":{
+        "persona":"question",
+        "skills":"none",
+        "extra":"none"
+    },
+    "neko":{
+        "persona":"neko",
+        "skills":"none",
+        "extra":"none"
     }
 }
