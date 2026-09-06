@@ -30,13 +30,9 @@
     "cnmd.mem.save":"[U] 已保存记忆",
     "cnmd.mem.analyse":"[U] 已整理记忆",
     "cnmd.mem.search":"[U] 查询记忆",
-    "cnmd.downloader.saved":"[U] 文件已保存",
-    "cnmd.downloader.error":"[U] 遇到错误: ",
-    "cnmd.wechat.event":"[U] 已设置时间触发器, 触发事件间隔: ",
-    "cnmd.wechat.imagesave":"[U] 已保存图像",
-    "cnmd.wechat.filesave":"[U] 已保存文件",
-    "cnmd.wechat.videosave":"[U] 已保存视频",
-    "cnmd.wechat.reason":"[U] Agent开始寻思",
+    "cnmd.mcp.getlist":"[U] 查询MCP列表",
+    "cnmd.mcp.gettoollist":"[U] 查询MCP工具",
+    "cnmd.mcp.usetool":"[U] 调用MCP工具: ",
     "bot.base.missionpass":"[A] 请继续任务",
     "bot.base.error":"[A] 遇到错误: ",
     "bot.agentlog.dir":"[D] 查看目录: ",
@@ -73,5 +69,6 @@
     "bot.tool.filedeletedone":"[A] 删除文件完成",
     "bot.multimodel.imread":"[A] 请读取图像",
     "bot.multimodel.auread":"[A] 请读取音频",
-    "bot.multimodel.viread":"[A] 请读取视频"
+    "bot.multimodel.viread":"[A] 请读取视频",
+    "bot.mcp.getlistfailed":"[A] 未能获取MCP列表活该配置不存在"
 }

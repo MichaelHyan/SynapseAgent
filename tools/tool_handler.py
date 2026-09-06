@@ -1,4 +1,4 @@
-from tools import fileedit,runcmd,webgrab,timer,memory,skills,lang
+from tools import fileedit,runcmd,webgrab,timer,memory,skills,lang,mcp_call
 import json,threading,time
 def tool(function:str):
     function = function.replace('<tool_call>','').replace('</tool_call>','')
@@ -138,3 +138,23 @@ def skill(args=None):
     else:
         return {'sys':skills.load(args),
                 'cli':lang.lang['bot.agentlog.skillread']}
+    
+def mcp(args:str=None):
+    args=None if args == None else args.strip().split(maxsplit=2)
+    if args == None or args[0] == 'list':
+        result = mcp_call.get_mcp_list()
+        return {'sys':result,
+                'cli':lang.lang['cnmd.mcp.getlist']}
+    if len(args) == 1:
+        result = mcp_call.list_tools(args[0])
+        return {'sys':result,
+                'cli':lang.lang['cnmd.mcp.gettoollist']}
+    else:
+        if len(args) == 3:
+            result = mcp_call.call_tool(args[0],args[1],eval(args[2]))
+            return {'sys':result,
+                    'cli':f'{lang.lang['cnmd.mcp.usetool']}{args[0]}→{args[1]}: {args[2]}'}
+        else:
+            result = mcp_call.call_tool(args[0],args[1],None)
+            return {'sys':result,
+                    'cli':f'{lang.lang['cnmd.mcp.usetool']}{args[0]}→{args[1]}'}

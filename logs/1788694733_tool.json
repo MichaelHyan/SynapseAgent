@@ -1,0 +1,23 @@
+[
+    [
+        "none"
+    ],
+    [
+        "\nlistdir D:/git/SynapseAgent/\n"
+    ],
+    [
+        "\nread D:/git/SynapseAgent/test.py\n"
+    ],
+    [
+        "none"
+    ],
+    [
+        "write D:/git/SynapseAgent/test.py\n\"\"\"\n通用 MCP 连接工具\n================\n\n提供两个可复用的异步方法：\n\n1. list_tools(server_config)  获取 MCP 服务器可用工具列表\n2. call_tool(server_config, tool_name, arguments)  调用指定工具并返回文本结果\n\n服务器配置格式兼容 MCP 客户端配置，例如：\n\n    {\n        \"mcpServers\": {\n            \"chrome-devtools\": {\n                \"command\": \"npx\",\n                \"args\": [\"-y\", \"chrome-devtools-mcp@latest\"]\n            }\n        }\n    }\n\n如需启用或关闭国内 npm 镜像，请修改内部变量 USE_CN_MIRROR。\n\"\"\"\n\nimport asyncio\n\nfrom mcp import ClientSession, StdioServerParameters\nfrom mcp.client.stdio import stdio_client\n\n# 国内 npm 镜像开关：True 时通过环境变量让 npx 使用国内镜像\nUSE_CN_MIRROR = True\nCN_NPM_REGISTRY = \"https://registry.npmmirror.com\"\n\n# MCP 服务器配置\nMCP_SERVERS = {\n    \"chrome-devtools\": {\n        \"command\": \"npx\",\n        \"args\": [\"-y\", \"chrome-devtools-mcp@latest\"],\n        \"description\": \"Chrome DevTools 自动化与调试工具\",\n    },\n    # 如需要使用 Wikipedia MCP，可取消注释：\n    # \"wikipedia\": {\n    #     \"command\": \"npx\",\n    #     \"args\": [\"-y\", \"wikipedia-mcp\"],\n    #     \"description\": \"检索维基百科条目\",\n    # },\n}\n\n\ndef _build_server_params(server_config: dict) -> StdioServerParameters:\n    \"\"\"根据配置构建 MCP stdio 服务器参数，并按开关注入国内 npm 镜像。\"\"\"\n    command = server_config[\"command\"]\n    args = list(server_config.get(\"args\", []))\n    env = dict(server_config.get(\"env\") or {})\n\n    if USE_CN_MIRROR and command == \"npx\":\n        env.setdefault(\"NPM_CONFIG_REGISTRY\", CN_NPM_REGISTRY)\n\n    return StdioServerParameters(command=command, args=args, env=env)\n\n\nasync def list_tools(server_config: dict) -> list[dict]:\n    \"\"\"连接 MCP 服务器，返回可用工具列表。\n\n    每个工具以字典形式返回，包含 name、description、inputSchema。\n    \"\"\"\n    server = _build_server_params(server_config)\n\n    async with stdio_client(server) as (read, write):\n        async with ClientSession(read, write) as session:\n            await session.initialize()\n\n            tools_result = await session.list_tools()\n            return [\n                {\n                    \"name\": tool.name,\n                    \"description\": getattr(tool, \"description\", None),\n                    \"inputSchema\": getattr(\n                        tool,\n                        \"inputSchema\",\n                        getattr(tool, \"input_schema\", None),\n                    ),\n                }\n                for tool in tools_result.tools\n            ]\n\n\nasync def call_tool(\n    server_config: dict,\n    tool_name: str,\n    arguments: dict | None = None,\n) -> str:\n    \"\"\"连接 MCP 服务器并调用指定工具，返回文本结果。\"\"\"\n    server = _build_server_params(server_config)\n\n    async with stdio_client(server) as (read, write):\n        async with ClientSession(read, write) as session:\n            await session.initialize()\n\n            result = await session.call_tool(\n                tool_name,\n                arguments=arguments or {},\n            )\n\n            text_parts = []\n            for item in result.content:\n                if hasattr(item, \"text\"):\n                    text_parts.append(item.text)\n                else:\n                    text_parts.append(str(item))\n\n            return \"\\n\".join(text_parts)\n\n\nasync def main():\n    \"\"\"演示：连接 chrome-devtools MCP 服务器，获取工具并调用第一个工具。\"\"\"\n    config = MCP_SERVERS[\"chrome-devtools\"]\n\n    try:\n        print(\"正在获取 MCP 工具列表 ...\")\n        tools = await list_tools(config)\n        print(f\"发现 {len(tools)} 个工具：\")\n        for tool in tools:\n            description = tool[\"description\"] or \"\"\n            print(f\"  - {tool['name']}: {description}\")\n\n        if not tools:\n            print(\"未发现可用工具。\")\n            return\n\n        example_tool = tools[0]\n        print(f\"\\n尝试调用示例工具：{example_tool['name']}\")\n        result = await call_tool(config, example_tool[\"name\"], {})\n        print(\"调用结果：\")\n        print(result or \"(无文本输出)\")\n\n    except FileNotFoundError:\n        print(\"错误：未找到 npx，请安装 Node.js 并确保 npx 在 PATH 中。\")\n    except Exception as exc:\n        print(f\"运行失败：{type(exc).__name__}: {exc}\")\n\n\nif __name__ == \"__main__\":\n    asyncio.run(main())\n"
+    ],
+    [
+        "none"
+    ],
+    [
+        "none"
+    ]
+]

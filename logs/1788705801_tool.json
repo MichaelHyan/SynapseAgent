@@ -1,0 +1,26 @@
+[
+    [
+        "none"
+    ],
+    [
+        "\nread D:/git/SynapseAgent/tools/mcp_call.py\n"
+    ],
+    [
+        "\nwrite D:/git/SynapseAgent/tools/mcp_call.py import asyncio,json\nfrom mcp import ClientSession, StdioServerParameters\nfrom mcp.client.stdio import stdio_client\n\nUSE_CN_MIRROR = True\nCN_NPM_REGISTRY = \"https://registry.npmmirror.com\"\n\nwith open('mcp.json','r',encoding='utf-8') as f:\n    MCP_SERVERS = json.load(f)\n\ndef _build_server_params(server_config: dict) -> StdioServerParameters:\n    command = server_config[\"command\"]\n    args = list(server_config.get(\"args\", []))\n    env = dict(server_config.get(\"env\") or {})\n    if USE_CN_MIRROR and command == \"npx\":\n        env.setdefault(\"NPM_CONFIG_REGISTRY\", CN_NPM_REGISTRY)\n    return StdioServerParameters(command=command, args=args, env=env)\n\n\nasync def list_tools(server_config: dict) -> list[dict]:\n    \"\"\"连接 MCP 服务器，返回可用工具列表。\n    每个工具以字典形式返回，包含 name、description、inputSchema。\n    \"\"\"\n    server = _build_server_params(server_config)\n    async with stdio_client(server) as (read, write):\n        async with ClientSession(read, write) as session:\n            await session.initialize()\n\n            tools_result = await session.list_tools()\n            return [\n                {\n                    \"name\": tool.name,\n                    \"description\": getattr(tool, \"description\", None),\n                    \"inputSchema\": getattr(\n                        tool,\n                        \"inputSchema\",\n                        getattr(tool, \"input_schema\", None),\n                    ),\n                }\n                for tool in tools_result.tools\n            ]\n\nasync def get_mcp_list() -> list[dict]:\n    \"\"\"获取所有已配置 MCP 服务器的工具列表，返回名字-简述。\n\n    返回列表，每项为 {\"name\": 工具名, \"description\": 工具简述}。\n    \"\"\"\n    result = []\n    for server_name, server_config in MCP_SERVERS.items():\n        try:\n            tools = await list_tools(server_config)\n            for tool in tools:\n                result.append({\n                    \"name\": tool[\"name\"],\n                    \"description\": tool[\"description\"] or \"\",\n                })\n        except Exception as exc:\n            # 跳过获取失败的服务器，继续获取其他服务器\n            print(f\"警告：获取 MCP 服务器 {server_name} 的工具列表失败: {exc}\")\n    return result\n\n\nasync def call_tool(\n    server_config: dict,\n    tool_name: str,\n    arguments: dict | None = None,\n) -> str:\n    server = _build_server_params(server_config)\n\n    async with stdio_client(server) as (read, write):\n        async with ClientSession(read, write) as session:\n            await session.initialize()\n\n            result = await session.call_tool(\n                tool_name,\n                arguments=arguments or {},\n            )\n\n            text_parts = []\n            for item in result.content:\n                if hasattr(item, \"text\"):\n                    text_parts.append(item.text)\n                else:\n                    text_parts.append(str(item))\n\n            return \"\\n\".join(text_parts)\n\n\nasync def main():\n    config = MCP_SERVERS[\"chrome-devtools\"]\n    try:\n        print(\"正在获取 MCP 工具列表 ...\")\n        tools = await list_tools(config)\n        print(f\"发现 {len(tools)} 个工具：\")\n        for tool in tools:\n            description = tool[\"description\"] or \"\"\n            print(f\"  - {tool['name']}: {description}\")\n\n        if not tools:\n            print(\"未发现可用工具。\")\n            return\n\n        example_tool = tools[0]\n        print(f\"\\n尝试调用示例工具：{example_tool['name']}\")\n        result = await call_tool(config, example_tool[\"name\"], {})\n        print(\"调用结果：\")\n        print(result or \"(无文本输出)\")\n\n    except FileNotFoundError:\n        print(\"错误：未找到 npx，请安装 Node.js 并确保 npx 在 PATH 中。\")\n    except Exception as exc:\n        print(f\"运行失败：{type(exc).__name__}: {exc}\")\n\n\nif __name__ == \"__main__\":\n    asyncio.run(main())\n"
+    ],
+    [
+        "none"
+    ],
+    [
+        "list_pages"
+    ],
+    [
+        "none"
+    ],
+    [
+        "powershell $paths=@(\"$env:LOCALAPPDATA\\Google\\Chrome\\Application\\chrome.exe\",\"$env:ProgramFiles\\Google\\Chrome\\Application\\chrome.exe\",\"${env:ProgramFiles(x86)}\\Google\\Chrome\\Application\\chrome.exe\",\"D:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\",\"D:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe\",\"${env:ProgramFiles(x86)}\\Microsoft\\Edge\\Application\\msedge.exe\",\"$env:ProgramFiles\\Microsoft\\Edge\\Application\\msedge.exe\"); $paths | ForEach-Object { \"$_ => $(Test-Path $_)\" }"
+    ],
+    [
+        "none"
+    ]
+]

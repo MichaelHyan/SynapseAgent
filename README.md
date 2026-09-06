@@ -197,6 +197,24 @@ python SynapseAgent.py 我的预设
 
 ---
 
+## MCP服务
+
+你可以自定义MCP服务。
+
+将你的配置信息复制进config_mcp.json，默认如下：
+
+```json
+{
+    "chrome-devtools": {
+        "command": "npx",
+        "args": ["-y", "chrome-devtools-mcp@latest"],
+        "description": "Chrome DevTools 自动化与调试工具"
+    }
+}
+```
+
+注意：由于突触助理使用的基本工具来自自身工具链而不是本地MCP服务器，所以默认情况下不会主动调用MCP服务，可在系统提示词中自行调整优先级。
+
 ## 🎭 记忆数据库
 
 不同于普通的 `Memory.md`，记忆数据库具备独立的向量式存储，支持智能检索与关联。

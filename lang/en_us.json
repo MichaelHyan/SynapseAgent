@@ -30,13 +30,9 @@
     "cnmd.mem.search":"[U] searching memory",
     "cnmd.bot.toolfail":"[U] Agent tool call failed: ",
     "cnmd.bot.callfail":"[U] Command format incorrect. Clease check your command.",
-    "cnmd.downloader.saved":"[U] file saved",
-    "cnmd.downloader.error":"[U] exception error: ",
-    "cnmd.wechat.event":"[U] timer event set, trigger in sec: ",
-    "cnmd.wechat.imagesave":"[U] image saved",
-    "cnmd.wechat.filesave":"[U] file saved",
-    "cnmd.wechat.videosave":"[U] video saved",
-    "cnmd.wechat.reason":"[U] Agent start thinking",
+    "cnmd.mcp.getlist":"[U] searching MCP server.",
+    "cnmd.mcp.gettoollist":"[U] searching MCP tools.",
+    "cnmd.mcp.usetool":"[U] calling MCP tool: ",
     "bot.base.missionpass":"[A] please continue mission",
     "bot.base.error":"[A] exception error: ",
     "bot.agentlog.dir":"[D] checking path: ",
@@ -73,5 +69,6 @@
     "bot.tool.filedeletedone":"[A] file delete complete",
     "bot.multimodel.imread":"[A] please read image",
     "bot.multimodel.auread":"[A] please read audio",
-    "bot.multimodel.viread":"[A] please read video"
+    "bot.multimodel.viread":"[A] please read video",
+    "bot.mcp.getlistfailed":"[A] failed to get MCP list"
 }
