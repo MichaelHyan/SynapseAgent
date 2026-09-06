@@ -324,6 +324,12 @@ python server.py
 
 ---
 
+## 💻 TUI(测试版)
+
+TUI与CLI版前端基本一致，输入改为直接回车输入。
+
+本模式尚处于测试阶段，如需使用，请确保已安装第三方库prompt_toolkit，之后使用python SynapseAgentTUI.py启动。
+
 ## ⚠️ 注意事项
 
 - 请务必在 `config.json` 中正确配置 API 信息和工作目录。
