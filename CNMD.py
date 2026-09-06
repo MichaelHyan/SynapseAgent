@@ -21,10 +21,10 @@ USR_COMMAND = [
     '#help',
     '#bot reasoning',
     '#bot reset',
-    '#bot reload'
+    '#bot reload',
     '#bot prompt',
     '#mem save',
-    '#mem analyse'
+    '#mem analyse',
     '#execute'
     ]
 
