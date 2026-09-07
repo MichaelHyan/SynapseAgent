@@ -227,7 +227,9 @@ python SynapseAgent.py 我的预设
 
 注：当前不再使用记忆关联系统，而是内置语义向量数据库，位于./database/vector.txt，需要可自行替换语义向量文件。
 
-当前数据来源：[TX-WORD2VEC-SMALL](https://github.com/cliuxinxin/TX-WORD2VEC-SMALL)，使用70000-small.txt。
+当前数据来源：[TX-WORD2VEC-SMALL](https://github.com/cliuxinxin/TX-WORD2VEC-SMALL)，使用45000-small.txt。
+
+**使用时，如果需要准确的语义查询，请先将其替换为更完善的语义向量文件！**
 
 ---
 
