@@ -225,6 +225,10 @@ python SynapseAgent.py 我的预设
   - `#mem save`  将当前对话关键信息写入记忆库
   - `#mem analyse`  整理压缩记忆库
 
+注：当前不再使用记忆关联系统，而是内置语义向量数据库，位于./database/vector.txt，需要可自行替换语义向量文件。
+
+当前数据来源：[TX-WORD2VEC-SMALL](https://github.com/cliuxinxin/TX-WORD2VEC-SMALL)，使用70000-small.txt。
+
 ---
 
 ## 📂 日志系统

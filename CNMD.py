@@ -25,7 +25,9 @@ USR_COMMAND = [
     '#bot prompt',
     '#mem save',
     '#mem analyse',
-    '#execute'
+    '#execute',
+    '#memory',
+    '#dream'
     ]
 
 class CNMD():
@@ -243,6 +245,15 @@ class CNMD():
                 self.msg_stack.append(lang.lang['cnmd.mem.analyse'])
             else:
                 self._correction(ori_cmd)
+        elif cmd[0] == '#memory':
+            post = []
+            for i in self.msg:
+                post.append(self.messages[i])
+            memory.save(post)
+            self.msg_stack.append(lang.lang['cnmd.mem.save'])
+        elif cmd[0] == '#dream':
+            memory.analyse()
+            self.msg_stack.append(lang.lang['cnmd.mem.analyse'])
         else:
             self._correction(ori_cmd)
     

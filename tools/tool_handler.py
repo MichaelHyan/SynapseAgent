@@ -95,22 +95,10 @@ def web(args:str):
                     'cli':f'{lang.lang['bot.agentlog.setheader']}{content}'}
 
 def mem(args:str):
-    mem = memory.mem_load(args.split())
+    mem = memory.mem_load(args)
     if mem != None:
         sys = f'{lang.lang['bot.tool.memory']}\n'
-        for i in mem:
-            sys += f'{i[0]}:{i[1]}\n'
-    else:
-        sys = lang.lang['bot.tool.memorynone']
-    return {'sys':sys,
-            'cli':lang.lang['cnmd.mem.search']}
-
-def memr(args:str):
-    mem = memory.mem_load(args.split(),relate=True)
-    if mem != None:
-        sys = f'{lang.lang['bot.tool.memory']}\n'
-        for i in mem:
-            sys += f'{i[0]}:{i[1]}\n'
+        sys += mem
     else:
         sys = lang.lang['bot.tool.memorynone']
     return {'sys':sys,

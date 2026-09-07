@@ -1,5 +1,7 @@
 import json
 import tools.bot as bot
+import tools.wordvec as wordvec
+
 def mem_save(dict):
     with open('./database/mem.json','r', encoding='utf-8') as f:
         data = json.load(f)
@@ -17,9 +19,17 @@ def similarity(str1, str2):
         return 1.0 if not intersection else 0.0
     return len(intersection) / len(union)
 
-import json
+def mem_load(target:str):
+    result = ''
+    target = target.strip().split()
+    with open('./database/mem.json', 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    match_result = wordvec.target(target)
+    for i in match_result:
+        result += f'{i}:{data[i]}]\n'
+    return result
 
-def mem_load(keyx,rematch = False,relate = False):
+def mem_load_old(keyx,rematch = False,relate = False):
     with open('./database/mem.json', 'r', encoding='utf-8') as f:
         data = json.load(f)
     dat = {}
