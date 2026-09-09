@@ -3,5 +3,11 @@
         "command": "npx",
         "args": ["-y", "chrome-devtools-mcp@latest"],
         "description": "Chrome DevTools 自动化与调试工具"
+    },
+    "bocha-mcp": {
+      "url": "https://mcp.bochaai.com/mcp",
+      "headers": {
+        "Authorization": "Bearer sk-xxxx"
+      }
     }
 }

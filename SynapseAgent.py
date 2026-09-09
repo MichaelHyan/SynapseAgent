@@ -49,6 +49,7 @@ def input_thread():
                 pass
             else:
                 input_list += user_input
+                input_list += '\n'
         except Exception as e:
             pass
 

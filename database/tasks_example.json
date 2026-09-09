@@ -1,0 +1,17 @@
+[
+    {
+        "number": 0,
+        "task": "告诉我现在的时间",
+        "report": ""
+    },
+    {
+        "number": 1,
+        "task": "今天几号",
+        "report": ""
+    },
+    {
+        "number": 2,
+        "task": "帮我测试mcp的搜索工具",
+        "report": ""
+    }
+]

@@ -70,5 +70,7 @@
     "bot.multimodel.imread":"[A] please read image",
     "bot.multimodel.auread":"[A] please read audio",
     "bot.multimodel.viread":"[A] please read video",
-    "bot.mcp.getlistfailed":"[A] failed to get MCP list"
+    "bot.mcp.getlistfailed":"[A] failed to get MCP list",
+    "subagent.task.gettasklist":"[S] please enter task file path(json)",
+    "subagent.task.taskdone":"[S] all tasks finished"
 }

@@ -4,6 +4,11 @@
         "skills":"skill_base",
         "extra":"agent_base"
     },
+    "sub_agent_base":{
+        "persona":"sub_agent_base",
+        "skills":"sub_skill_base",
+        "extra":"sub_agent_base"
+    },
     "question":{
         "persona":"question",
         "skills":"none",

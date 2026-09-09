@@ -2,6 +2,7 @@ import asyncio
 import argparse
 import re
 import threading
+from datetime import datetime
 
 import CNMD
 
@@ -20,6 +21,7 @@ ANSI_RE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 parser = argparse.ArgumentParser()
 parser.add_argument('name', nargs='?', default='agent_base')
 args = parser.parse_args()
+MODEL_NAME = args.name
 
 cnm = CNMD.CNMD()
 cnm.set_prompt(args.name)
@@ -28,24 +30,29 @@ app = None
 input_buffer = None
 status_control = None
 output_control = None
-output_window = None          # 输出窗口引用，用于动态获取可见高度
-output_lines = []             # 每项为 (style, text)
-scroll_offset = 0             # 当前显示起始行（0 表示第一行）
-auto_scroll = True            # 是否自动滚动到底部
+output_window = None
+output_lines = []
+scroll_offset = 0
+auto_scroll = True
 
 is_busy = False
 is_reasoning = False
 spinner_index = 0
 
 BANNER = r'''
-╭──────────────────────────────────────────╮
-│     //  \\                               │
-│     \\  //           SynapseAgent        │
-│       ||         ────────────────────    │
-│    //    \\         Think Backward       │
-│ //  \\  //  \\       And Re:Start!       │
-│ \\  //  \\  //                           │
-╰──────────────────────────────────────────╯
+╭───────────────────────────────────────────╮
+│                                           │
+│  ███  █   █ █   █  ███  ████   ███  █████ │
+│ █     █   █ ██  █ █   █ █   █ █     █     │
+│  ███   █ █  █ █ █ █████ ████   ███  ████  │
+│     █   █   █  ██ █   █ █         █ █     │
+│     █   █   █   █ █   █ █         █ █     │
+│ ████    █   █   █ █   █ █     ████  █████ │
+│                                           │
+│       SynapseAgent · Think Backward       │
+│               And Re:Start!               │
+│                                           │
+╰───────────────────────────────────────────╯
 '''
 
 
@@ -54,7 +61,6 @@ def strip_ansi(text):
 
 
 def get_visible_height():
-    """获取输出窗口当前可见行数，若尚未渲染则返回默认值 25。"""
     global output_window
     if output_window is None or output_window.render_info is None:
         return 25
@@ -62,7 +68,6 @@ def get_visible_height():
 
 
 def append_output_message(style, text):
-    """向输出列表添加一行，按换行拆分为多行，并自动刷新显示。"""
     global output_lines, scroll_offset, auto_scroll
     if text is None:
         return
@@ -70,26 +75,27 @@ def append_output_message(style, text):
     lines = clean.split('\n')
     for line in lines:
         output_lines.append((style, line))
-    # 新输出自动滚动到底部
     auto_scroll = True
-    scroll_offset = len(output_lines)  # 由 refresh_output 修正为合法值
+    scroll_offset = len(output_lines)
     refresh_output()
 
 
 def append_output_user(text):
-    append_output_message('class:user', f'你: {text}')
+    ts = datetime.now().strftime('%H:%M')
+    append_output_message('class:user', f'[{ts}] 你: {text}')
 
 
 def append_output_agent(text):
-    append_output_message('class:output', text)
+    ts = datetime.now().strftime('%H:%M')
+    append_output_message('class:agent', f'[{ts}] {text}')
 
 
 def append_output_system(text):
-    append_output_message('class:status', text)
+    ts = datetime.now().strftime('%H:%M')
+    append_output_message('class:system', f'[{ts}] ⚡ {text}')
 
 
 def refresh_output():
-    """根据 scroll_offset、auto_scroll 和动态可见高度刷新输出区显示内容。"""
     global output_control, output_lines, scroll_offset, auto_scroll, output_window
     if output_control is None:
         return
@@ -177,7 +183,6 @@ async def update_loop():
     last_height = None
     while True:
         try:
-            # 检测输出窗口高度变化并刷新显示
             current_height = get_visible_height()
             if current_height != last_height:
                 last_height = current_height
@@ -191,9 +196,15 @@ async def update_loop():
 
             if is_reasoning:
                 spinner_index = (spinner_index + 1) % len(BAR)
-                status_control.text = HTML(f'<ansigreen>{BAR[spinner_index]} 思考中...</ansigreen>')
+                status_control.text = HTML(
+                    f'<ansigreen>{BAR[spinner_index]} 思考中...</ansigreen>'
+                    f' <ansigray>· 模型 {MODEL_NAME}</ansigray>'
+                )
             else:
-                status_control.text = HTML('<ansigray>   </ansigray>')
+                status_control.text = HTML(
+                    f'<ansigreen>●</ansigreen>'
+                    f' <ansigray>就绪 · 模型 {MODEL_NAME}</ansigray>'
+                )
 
             if app is not None:
                 app.invalidate()
@@ -236,12 +247,11 @@ def _(event):
 async def main():
     global app, output_control, output_window, input_buffer, status_control, output_lines, scroll_offset, auto_scroll
 
-    # 初始化输出行：Banner 蓝色，提示行灰色
     output_lines = []
     for line in BANNER.strip('\n').split('\n'):
         output_lines.append(('class:banner', line))
-    output_lines.append(('class:status', 'Enter 发送 | Shift+Enter 换行 | #help 查看命令 | #exit 退出'))
-    scroll_offset = len(output_lines)  # 配合 auto_scroll 由 refresh_output 处理
+    output_lines.append(('class:system', '[系统] Enter 发送 | Ctrl+J 换行 | #help 查看命令 | #exit 退出'))
+    scroll_offset = len(output_lines)
     auto_scroll = True
 
     output_control = FormattedTextControl(text=[], focusable=False)
@@ -252,11 +262,10 @@ async def main():
         content=output_control,
         wrap_lines=True,
         style='class:output',
-        # 不设置 height，使输出区自动填充剩余空间
     )
     input_prompt_window = Window(
-        width=4,
-        content=FormattedTextControl([('class:prompt', '你: ')]),
+        width=6,
+        content=FormattedTextControl([('class:prompt', '❯ 你: ')]),
         style='class:prompt',
     )
     input_window = Window(
@@ -265,10 +274,9 @@ async def main():
         style='class:input',
     )
     input_container = VSplit([input_prompt_window, input_window], height=3)
-    separator = Window(height=1, char='─')
+    separator = Window(height=1, char='━', style='class:separator')
     status_window = Window(content=status_control, height=1, style='class:status')
 
-    # 底部布局：状态区在上，输入区在下
     root = HSplit([
         output_window,
         separator,
@@ -279,12 +287,15 @@ async def main():
     layout = Layout(container=root, focused_element=input_window)
 
     style = Style.from_dict({
-        'output': 'fg:#dddddd',
+        'output': 'fg:#d4d4d4',
         'input': 'fg:#ffffff',
-        'prompt': 'bold fg:ansicyan',
-        'status': 'fg:#aaaaaa bg:#333333',
-        'banner': 'fg:#66ccff',
-        'user': 'fg:#ffcc66',
+        'prompt': 'bold fg:#00ff87',
+        'status': 'fg:#aaaaaa bg:#2d2d2d',
+        'banner': 'fg:#00d4ff',
+        'user': 'bold fg:#ffb86c',
+        'agent': 'fg:#e4e4e4',
+        'system': 'fg:#8a8a8a',
+        'separator': 'fg:#444444',
     })
 
     app = Application(
@@ -295,7 +306,6 @@ async def main():
         mouse_support=False,
     )
 
-    # 初始刷新（此时可能使用默认高度，后续 update_loop 会校正）
     refresh_output()
 
     task = asyncio.create_task(update_loop())

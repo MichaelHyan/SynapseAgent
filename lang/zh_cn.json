@@ -70,5 +70,7 @@
     "bot.multimodel.imread":"[A] 请读取图像",
     "bot.multimodel.auread":"[A] 请读取音频",
     "bot.multimodel.viread":"[A] 请读取视频",
-    "bot.mcp.getlistfailed":"[A] 未能获取MCP列表活该配置不存在"
+    "bot.mcp.getlistfailed":"[A] 未能获取MCP列表活该配置不存在",
+    "subagent.task.gettasklist":"[S] 请输入任务文件路径(json文件)",
+    "subagent.task.taskdone":"[S] 已完成所有任务"
 }
