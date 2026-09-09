@@ -187,9 +187,9 @@ class SubAgent():
                         json.dump(self.toolcall,f,indent=4,ensure_ascii=False)
             elif calls == [] and '<tool_call>' in content:
                 if text == '':
-                    msg_stack.append(lang.lang['cnmd.bot.responsefailcontinue'])
+                    msg_stack.append(f'SubAgent{self.number}:{lang.lang['cnmd.bot.responsefailcontinue']}')
                 else:
-                    msg_stack.append(text)
+                    msg_stack.append(f'SubAgent{self.number}:{text}')
                 self.messages.append(
                     {
                         "role": "system",
@@ -226,21 +226,18 @@ class SubAgent():
                         json.dump(self.toolcall,f,indent=4,ensure_ascii=False)
                 try:
                     if self.cmd_check != [] and self.cmd_check == calls:
-                        msg_stack.append(lang.lang['cnmd.bot.refuse'])
+                        msg_stack.append(f'SubAgent{self.number}:{lang.lang['cnmd.bot.refuse']}')
                         cmd = lang.lang['bot.tool.refuse']
                     else:
                         cmd = '[A]tool call feedback:\n'
                         for i in calls:
                             toolcall = tool.tool(i)
                             cmd += f'{toolcall['sys']}\n---\n'
-                            msg_stack.append(toolcall['cli'])
+                            msg_stack.append(f'SubAgent{self.number}:{toolcall['cli']}')
 
                 except Exception as e:
-                    msg_stack.append(f'{lang.lang['cnmd.base.error']}{str(e)}')
+                    msg_stack.append(f'SubAgent{self.number}:{lang.lang['cnmd.base.error']}{str(e)}')
                     cmd = f'{lang.lang['bot.base.error']}{str(e)}'
-        if self.mslock == False:
-            self.mslock = True
-            msg_stack.append(lang.lang['cnmd.base.pause'])
         return
 
 def stack_print(stack):
