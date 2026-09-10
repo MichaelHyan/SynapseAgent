@@ -30,6 +30,8 @@
     "cnmd.mem.save":"[U] 已保存记忆",
     "cnmd.mem.analyse":"[U] 已整理记忆",
     "cnmd.mem.search":"[U] 查询记忆",
+    "cnmd.subagent.start":"[U] 任务队列已启动",
+    "cnmd.subagent.loadfail":"[U] 未能读取配置文件：",
     "cnmd.mcp.getlist":"[U] 查询MCP列表",
     "cnmd.mcp.gettoollist":"[U] 查询MCP工具",
     "cnmd.mcp.usetool":"[U] 调用MCP工具: ",

@@ -4,7 +4,7 @@ import tools.tool_handler as tool
 import tools.bot as bot
 import tools.lang as lang
 import tools.tag_parser as tag_parser
-import copy,json,time,threading,os
+import copy,json,time,threading,os,sys,subprocess
 if not os.path.exists('./logs'):
     os.makedirs('./logs')
 if not os.path.exists('./bak'):
@@ -239,6 +239,18 @@ class SubAgent():
                     msg_stack.append(f'SubAgent{self.number}:{lang.lang['cnmd.base.error']}{str(e)}')
                     cmd = f'{lang.lang['bot.base.error']}{str(e)}'
         return
+
+def startsubagent():
+    if sys.platform.startswith("win"):
+        cmd = 'start "" cmd /k "python SynapseAgent_SubAgent.py"'
+        subprocess.Popen(cmd, shell=True)
+    elif sys.platform == "darwin":
+        subprocess.Popen(["osascript", "-e",
+                          'tell application "Terminal" to do script "python SynapseAgent_SubAgent.py"'])
+    else:
+        args = ["gnome-terminal", "--", "bash", "-c",
+                "python SynapseAgent_SubAgent.py; exec bash"]
+        subprocess.Popen(args)
 
 def stack_print(stack):
     while True:

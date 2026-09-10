@@ -106,11 +106,13 @@ def process_thread():
 
 
 def main():
-    print(lang.lang['subagent.task.gettasklist'])
-    file_path = input().strip().strip('"').strip("'")
-    file_path = os.path.abspath(file_path)
+    file_path = './database/tasks.json'
 
-    tasks = load_tasks(file_path)
+    try:
+        tasks = load_tasks(file_path)
+    except Exception as e:
+        print(f'{lang.lang['cnmd.subagent.loadfail']}{e}')
+        return
     assign_colors(tasks)
 
     output_thread = threading.Thread(target=process_thread, daemon=True)

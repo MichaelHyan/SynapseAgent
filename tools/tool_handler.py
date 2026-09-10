@@ -1,4 +1,4 @@
-from tools import fileedit,runcmd,webgrab,timer,memory,skills,lang,mcp_call
+from tools import fileedit,runcmd,webgrab,timer,memory,skills,lang,mcp_call,subagent
 import json,threading,time
 def tool(function:str):
     function = function.replace('<tool_call>','').replace('</tool_call>','')
@@ -146,3 +146,8 @@ def mcp(args:str=None):
             result = mcp_call.call_tool(args[0],args[1],None)
             return {'sys':result,
                     'cli':f'{lang.lang['cnmd.mcp.usetool']}{args[0]}→{args[1]}'}
+
+def taskstart(args=None):
+    subagent.startsubagent()
+    return {'sys':'PAUSE',
+            'cli':f'{lang.lang['cnmd.subagent.start']}'}

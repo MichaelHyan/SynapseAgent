@@ -327,6 +327,8 @@ class CNMD():
 
         self.mstemp = copy.deepcopy(self.msg)
         while True and self.mslock:
+            if cmd == '[A]tool call feedback:\nPAUSE\n---\n':
+                return
             if cmd[:3] == '#I#':
                 self.messages.append(
                     {

@@ -30,6 +30,8 @@
     "cnmd.mem.search":"[U] searching memory",
     "cnmd.bot.toolfail":"[U] Agent tool call failed: ",
     "cnmd.bot.callfail":"[U] Command format incorrect. Clease check your command.",
+    "cnmd.subagent.start":"[U] Task Queue started.",
+    "cnmd.subagent.loadfail":"[U] unable to load task file:",
     "cnmd.mcp.getlist":"[U] searching MCP server.",
     "cnmd.mcp.gettoollist":"[U] searching MCP tools.",
     "cnmd.mcp.usetool":"[U] calling MCP tool: ",
