@@ -9,6 +9,11 @@
         "skills":"sub_skill_base",
         "extra":"sub_agent_base"
     },
+    "agent_modify":{
+        "persona":"agent_modify",
+        "skills":"skill_modify",
+        "extra":"agent_modify"
+    },
     "question":{
         "persona":"question",
         "skills":"none",

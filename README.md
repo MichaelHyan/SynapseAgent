@@ -209,11 +209,19 @@ python SynapseAgent.py 我的预设
         "command": "npx",
         "args": ["-y", "chrome-devtools-mcp@latest"],
         "description": "Chrome DevTools 自动化与调试工具"
+    },
+    "bocha-mcp": {
+      "url": "https://mcp.bochaai.com/mcp",
+      "headers": {
+        "Authorization": "Bearer sk-xxxx"
+      }
     }
 }
 ```
 
-注意：由于突触助理使用的基本工具来自自身工具链而不是本地MCP服务器，所以默认情况下不会主动调用MCP服务，可在系统提示词中自行调整优先级。
+注意：
+- 由于突触助理使用的基本工具来自自身工具链而不是本地MCP服务器，所以默认情况下不会主动调用MCP服务，可在系统提示词中自行调整优先级。
+- 暂不支持SSE类型MCP
 
 ## 🎭 记忆数据库
 
