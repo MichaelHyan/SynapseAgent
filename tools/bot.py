@@ -8,9 +8,9 @@ client = OpenAI(api_key='API_KEY',
 
 def reload():
     global config,config_model,client
-    with open('config.json',encoding='utf-8') as f:
+    with open('./config/config.json',encoding='utf-8') as f:
         config = json.load(f)
-    with open('config_model.json',encoding='utf-8') as f:
+    with open('./config/config_model.json',encoding='utf-8') as f:
         config_model = json.load(f)
     client = OpenAI(
         api_key=config['API_KEY'],

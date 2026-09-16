@@ -108,6 +108,8 @@ def get_word_vector(wv, word):
 
 def match(target_word,candidate_words,matchs=1):
     global wv
+    if wv == '':
+        wv = load_wv(VECTOR_PATH, VECTOR_BINARY)
     target_vector = get_word_vector(wv, target_word)
 
     valid_words = []
@@ -148,4 +150,4 @@ def target(target):
                 result.append(c)
     return result
 
-wv = load_wv(VECTOR_PATH, VECTOR_BINARY)
+wv = ''

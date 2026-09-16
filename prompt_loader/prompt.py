@@ -1,7 +1,7 @@
 import json
 import json,platform
 
-with open('config.json',encoding='utf-8') as f:
+with open('./config/config.json',encoding='utf-8') as f:
     config_base = json.load(f)
 with open('./prompt_loader/config.json',encoding='utf-8') as f:
     config = json.load(f)

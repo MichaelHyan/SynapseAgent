@@ -3,6 +3,17 @@ import threading
 import time,os
 
 cmd_output = ''
+
+def _smart_decode(raw, encodings=('utf-8', 'gbk')):
+    if raw is None:
+        return ''
+    for enc in encodings:
+        try:
+            return raw.decode(enc)
+        except UnicodeDecodeError:
+            continue
+    return raw.decode(encodings[0], errors='replace')
+
 def cmd(cmd):
     global cmd_output
     try:
@@ -28,10 +39,9 @@ def pws(cmd):
     try:
         result = subprocess.run(
             [powershell_path, "-Command", cmd],
-            check=True,
-            capture_output=True,
-            text=True
+            check=False,
+            capture_output=True
         )
-        cmd_output += f'{result.stdout}\n'
+        cmd_output += f'{_smart_decode(result.stdout)}\n'
     except Exception as e:
         cmd_output += f'{e}\n'

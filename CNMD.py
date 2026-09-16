@@ -32,7 +32,7 @@ USR_COMMAND = [
 
 class CNMD():
     def __init__(self,prompt = prompt):
-        with open('config.json',encoding='utf-8') as f:
+        with open('./config/config.json',encoding='utf-8') as f:
             self.config = json.load(f)
         self.TIME_STAMP = round(time.time())
         self.stage_break = self.config['break']
@@ -259,7 +259,7 @@ class CNMD():
     
     def _reset(self):
         bot.reload()
-        with open('config.json',encoding='utf-8') as f:
+        with open('./config/config.json',encoding='utf-8') as f:
             self.config = json.load(f)
         self.TIME_STAMP = round(time.time())
         self.prompt = prompt.load('agent_base')
@@ -305,6 +305,15 @@ class CNMD():
         self.tic = 1
         self.msg_stack.append(lang.lang['bot.agentlog.submission'])
 
+    def log(self):
+        if self.enable_log:
+            with open(f'./logs/{self.TIME_STAMP}.json','w',encoding='utf-8') as f:
+                json.dump(self.messages,f,indent=4,ensure_ascii=False)
+            with open(f'./logs/{self.TIME_STAMP}_node.json','w',encoding='utf-8') as f:
+                json.dump(self.nodelist,f,indent=4,ensure_ascii=False)
+            with open(f'./logs/{self.TIME_STAMP}_tool.json','w',encoding='utf-8') as f:
+                json.dump(self.toolcall,f,indent=4,ensure_ascii=False)
+
     def CNMD(self,cmd):
         if cmd[0] == '#':
             if '#execute' not in cmd and '#e' not in cmd:
@@ -329,7 +338,7 @@ class CNMD():
         while True and self.mslock:
             if cmd == '[A]tool call feedback:\nPAUSE\n---\n':
                 return
-            if cmd[:3] == '#I#':
+            if '<tool_call>image</tool_call>' in cmd:
                 self.messages.append(
                     {
                         "role":"user",
@@ -337,7 +346,7 @@ class CNMD():
                             {
                                 "type": "image_url",
                                 "image_url": {
-                                    "url": f"data:image/jpeg;base64,{cmd[3:]}"
+                                    "url": f"data:image/jpeg;base64,{cmd.split('<tool_call>image</tool_call>')[1].split('\n')[0]}"
                                 }
                             },
                             {
@@ -347,7 +356,7 @@ class CNMD():
                         ]
                     }
                 )
-            elif cmd[:3] == '#A#':
+            elif '<tool_call>audio</tool_call>' in cmd:
                 self.messages.append(
                     {
                         "role":"user",
@@ -355,7 +364,7 @@ class CNMD():
                             {
                                 "type": "input_audio",
                                 "input_audio": {
-                                    "data": cmd[3:],
+                                    "data": cmd.split('<tool_call>audio</tool_call>')[1].split('\n')[0],
                                     "format": "audio/mp3"
                                 }
                             },
@@ -366,7 +375,7 @@ class CNMD():
                         ]
                     }
                 )
-            elif cmd[:3] == '#V#':
+            elif '<tool_call>video</tool_call>' in cmd:
                 self.messages.append(
                     {
                         "role":"user",
@@ -374,7 +383,7 @@ class CNMD():
                             {
                                 "type": "video_url",
                                 "video_url": {
-                                    "url": cmd[3:],
+                                    "url": cmd.split('<tool_call>video</tool_call>')[1].split('\n')[0],
                                     "format": "mp4",
                                     "fps": 2,
                                     "media_resolution": "default"
@@ -426,13 +435,7 @@ class CNMD():
                 self.msg.append(self.tic)
                 self.tic += 1
                 self.toolcall.append(['none'])
-                if self.enable_log:
-                    with open(f'./logs/{self.TIME_STAMP}.json','w',encoding='utf-8') as f:
-                        json.dump(self.messages,f,indent=4,ensure_ascii=False)
-                    with open(f'./logs/{self.TIME_STAMP}_node.json','w',encoding='utf-8') as f:
-                        json.dump(self.nodelist,f,indent=4,ensure_ascii=False)
-                    with open(f'./logs/{self.TIME_STAMP}_tool.json','w',encoding='utf-8') as f:
-                        json.dump(self.toolcall,f,indent=4,ensure_ascii=False)
+                self.log()
                 break
             elif calls == [] and '<tool_call>' in content:
                 if text == '':
@@ -448,13 +451,7 @@ class CNMD():
                 self.msg.append(self.tic)
                 self.tic += 1
                 self.toolcall.append(['none'])
-                if self.enable_log:
-                    with open(f'./logs/{self.TIME_STAMP}.json','w',encoding='utf-8') as f:
-                        json.dump(self.messages,f,indent=4,ensure_ascii=False)
-                    with open(f'./logs/{self.TIME_STAMP}_node.json','w',encoding='utf-8') as f:
-                        json.dump(self.nodelist,f,indent=4,ensure_ascii=False)
-                    with open(f'./logs/{self.TIME_STAMP}_tool.json','w',encoding='utf-8') as f:
-                        json.dump(self.toolcall,f,indent=4,ensure_ascii=False)
+                self.log()
                 cmd = lang.lang['cnmd.bot.callfail']
             else:
                 if text != '':
@@ -468,21 +465,17 @@ class CNMD():
                 self.msg.append(self.tic)
                 self.tic += 1
                 self.toolcall.append(calls)
-                if self.enable_log:
-                    with open(f'./logs/{self.TIME_STAMP}.json','w',encoding='utf-8') as f:
-                        json.dump(self.messages,f,indent=4,ensure_ascii=False)
-                    with open(f'./logs/{self.TIME_STAMP}_node.json','w',encoding='utf-8') as f:
-                        json.dump(self.nodelist,f,indent=4,ensure_ascii=False)
-                    with open(f'./logs/{self.TIME_STAMP}_tool.json','w',encoding='utf-8') as f:
-                        json.dump(self.toolcall,f,indent=4,ensure_ascii=False)
+                self.log()
                 try:
                     if self.cmd_check != [] and self.cmd_check == calls:
                         if self.stage_break:
                             self.msg_stack.append(lang.lang['cnmd.bot.refuse'])
+                            self.cmd_check == []
                             break
                         else:
                             self.msg_stack.append(lang.lang['cnmd.bot.refuse'])
                             cmd = lang.lang['bot.tool.refuse']
+                            self.cmd_check == []
                     else:
                         self.cmd_check = copy.deepcopy(calls)
                         if not self.allow_cmd:

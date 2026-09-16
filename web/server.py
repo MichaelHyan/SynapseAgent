@@ -15,7 +15,7 @@ app = Flask(__name__, static_folder='static', template_folder='static')
 app.config['SECRET_KEY'] = uuid.uuid4().hex
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
-CONFIG_PATH = os.path.join(project_dir, 'config.json')
+CONFIG_PATH = os.path.join(project_dir, './config/config.json')
 MODELS_PATH = os.path.join(web_dir, 'models.json')
 
 cnm = None
@@ -216,7 +216,7 @@ def node_delete():
 
 @app.route('/api/prompts')
 def list_prompts():
-    config_path = os.path.join(project_dir, 'prompt_loader', 'config.json')
+    config_path = os.path.join(project_dir, 'prompt_loader', './config.json')
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
             prompts = json.load(f)

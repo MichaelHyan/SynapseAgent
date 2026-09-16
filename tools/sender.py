@@ -1,3 +1,4 @@
+#won`t work without wechat port`
 import os
 import sys
 import time

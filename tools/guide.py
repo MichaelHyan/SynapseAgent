@@ -141,7 +141,7 @@ def main():
         print(f'{Color.CYAN}●{Color.RESET}check operation instructions: {Color.RED}{'YES' if config['break'] else 'NO'}{Color.RESET}')
         print(f'{Color.CYAN}●{Color.RESET}enable debug mode: {Color.RED}{'YES' if config['break'] else 'NO'}{Color.RESET}')
     input()
-    with open(f'./config.json','w',encoding='utf-8') as f:
+    with open(f'./config/config.json','w',encoding='utf-8') as f:
         json.dump(config,f,indent=4,ensure_ascii=False)
 
     if lang == 'zh_cn':
@@ -164,6 +164,6 @@ def print_banner():
     print(f"{Color.RESET}")
     print(f'{Color.WHITE}{"─" * (os.get_terminal_size().columns-1)}{Color.RESET}')
 
-if not os.path.exists('./config.json'):
+if not os.path.exists('./config/config.json'):
     print_banner()
     main()

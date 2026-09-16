@@ -46,6 +46,7 @@
     "bot.agentlog.imread":"[D] 读取图片: ",
     "bot.agentlog.auread":"[D] 读取音频: ",
     "bot.agentlog.viread":"[D] 读取视频: ",
+    "bot.agentlog.screenshot":"[D] 查看屏幕截图",
     "bot.agentlog.webgrab":"[D] 查看网站: ",
     "bot.agentlog.setheader":"[D] 设置网站header: ",
     "bot.agentlog.ping":"[D] 测试连通性: ",

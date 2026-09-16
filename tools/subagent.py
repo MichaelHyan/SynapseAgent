@@ -16,7 +16,7 @@ class SubAgent():
     def __init__(self,task,number=0):
         self.task = task
         self.number = number
-        with open('config.json',encoding='utf-8') as f:
+        with open('./config/config.json',encoding='utf-8') as f:
             self.config = json.load(f)
         self.TIME_STAMP = round(time.time())
         self.stage_break = self.config['break']
@@ -38,7 +38,7 @@ class SubAgent():
 
     def _reset(self):
         bot.reload()
-        with open('config.json',encoding='utf-8') as f:
+        with open('./config/config.json',encoding='utf-8') as f:
             self.config = json.load(f)
         self.TIME_STAMP = round(time.time())
         self.prompt = prompt.load('sub_agent_base')

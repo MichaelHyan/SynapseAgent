@@ -1,7 +1,7 @@
 import os,base64,shutil
 import tools.lang as lang
 import json
-with open('config.json',encoding='utf-8') as f:
+with open('./config/config.json',encoding='utf-8') as f:
     config = json.load(f)
 
 SIZE_LIMIT = 1

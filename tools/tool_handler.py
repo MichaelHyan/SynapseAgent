@@ -1,4 +1,4 @@
-from tools import fileedit,runcmd,webgrab,timer,memory,skills,lang,mcp_call,subagent
+from tools import fileedit,runcmd,webgrab,timer,memory,skills,lang,mcp_call,subagent,screenshot
 import json,threading,time
 def tool(function:str):
     function = function.replace('<tool_call>','').replace('</tool_call>','')
@@ -105,19 +105,24 @@ def mem(args:str):
             'cli':lang.lang['cnmd.mem.search']}
 
 def imread(path:str):
-    sys = fileedit.encode(path,'#I#')
+    sys = fileedit.encode(path,'<tool_call>image</tool_call>')
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.imread']}{path}'}
 
 def auread(path:str):
-    sys = fileedit.encode(path,'#A#')
+    sys = fileedit.encode(path,'<tool_call>audio</tool_call>')
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.auread']}{path}'}
 
 def viread(path:str):
-    sys = fileedit.encode(path,'#V#')
+    sys = fileedit.encode(path,'<tool_call>video</tool_call>')
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.viread']}{path}'}
+
+def screen(args=None):
+    sys = screenshot.capture_all_base64(prefix='<tool_call>image</tool_call>')
+    return {'sys':sys,
+            'cli':f'{lang.lang['bot.agentlog.screenshot']}'}
 
 def skill(args=None):
     if args == None:
@@ -139,7 +144,8 @@ def mcp(args:str=None):
                 'cli':lang.lang['cnmd.mcp.gettoollist']}
     else:
         if len(args) == 3:
-            result = mcp_call.call_tool(args[0],args[1],eval(args[2]))
+            dic = json.loads(args[2])
+            result = mcp_call.call_tool(args[0],args[1],dic)
             return {'sys':result,
                     'cli':f'{lang.lang['cnmd.mcp.usetool']}{args[0]}→{args[1]}: {args[2]}'}
         else:

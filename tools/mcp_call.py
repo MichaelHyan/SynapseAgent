@@ -9,7 +9,7 @@ import tools.lang as lang
 USE_CN_MIRROR = True
 CN_NPM_REGISTRY = "https://registry.npmmirror.com"
 
-with open('config_mcp.json', 'r', encoding='utf-8') as f:
+with open('./config/config_mcp.json', 'r', encoding='utf-8') as f:
     MCP_SERVERS = json.load(f)
 
 def _build_server_params(server_config: dict) -> StdioServerParameters:
