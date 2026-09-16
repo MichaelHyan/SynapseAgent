@@ -1,6 +1,8 @@
-# SynapseAgent
+﻿# SynapseAgent
 
 > **Think Backward, And Re:Start!**
+
+> **只想快速上手？** 请看简明版文档：[README_short.md](README_short.md)（仅含安装与基础设置）
 
 ![](logo.png)
 
@@ -67,6 +69,11 @@ pip install -r requirements.txt
 
 ### 2. 配置
 
+主要配置文件位于`./database`目录下，包含：
+- config.json 默认为空，初次启动CLI会自动进入引导程序辅助创建
+- config_model.json 默认为空，可加入openai接口参数
+- config_mcp.json 保存mcp配置信息
+
 首次运行时将启动配置引导程序。根据引导填入信息，结束后将在本地保存`config.json`并启动程序。
 
 你可以随时修改`config.json`。
@@ -125,6 +132,7 @@ python SynapseAgent.py [预设名称]
 | `#node backwardms` | 回退一次事件（回退到本次工具调用前） |
 | `#mem save` | 提取当前对话关键信息并存入记忆数据库 |
 | `#mem analyse` | 对记忆数据库进行整理、去重和压缩 |
+| `#mem compress` | 直接压缩上文，谨慎使用 |
 | `#bot reset` | 清空对话记录 |
 | `#bot reload` | 重新加载模型参数（API 热更新） |
 | `#bot prompt <预设名>` | 切换系统提示词预设（需在 `prompt_loader/config.json` 中定义） |

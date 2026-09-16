@@ -26,7 +26,7 @@ def mem_load(target:str):
         data = json.load(f)
     match_result = wordvec.target(target)
     for i in match_result:
-        result += f'{i}:{data[i]}]\n'
+        result += f'{i}:{data[i]}\n'
     return result
 
 def mem_load_old(keyx,rematch = False,relate = False):
@@ -67,6 +67,15 @@ def mem_load_old(keyx,rematch = False,relate = False):
                 result.append([i,data[i]])
     return result if result else None
 
+def compress(x):
+    content='''整理以上对话的重要内容，直接返回整理结果。'''
+    x.append({
+        "role":"user",
+        "content": content
+    })
+    reply = bot.reply(x)
+    content = reply['content']
+    return content
 
 def analyse():
     with open('./database/mem.json','r',encoding='utf-8') as f:
@@ -157,12 +166,10 @@ def analyse():
 
 def save(x):
     content='''请总结以上对话，并严格按照以下格式输出总结内容。
-使用$$$作为分界符，每条信息用换行符分割。如:
-$$$
+如:
 信息类型1=>信息1
 信息类型2=>信息2
 ...
-$$$
 
 需要整理的信息类型：
 对话事件类：
@@ -183,13 +190,11 @@ $$$
 直播涨粉属于不重要且短时信息，所以不加
 工作习惯=>先确定当事人意图和立场，然后根据实际行为判断当事人行为类型
 
-你需要如此回答：
-我将总结信息。$$$
+你需要如此回答，且只能回答输出类似以下的结果：
 用户名=>张三
 职业工作=>法学教授，普法，法学学术论文
 昨日信息=>写了一篇关于正当防卫的论文
 工作习惯=>先确定当事人意图和立场，然后根据实际行为判断当事人行为类型
-$$$
 '''
     x.append({
         "role":"user",
@@ -197,7 +202,7 @@ $$$
     })
     reply = bot.reply(x)
     content = reply['content']
-    content = content.split('$$$')[1].split('\n')
+    content = content.strip().split('\n')
     c = {}
     for i in content:
         if i:

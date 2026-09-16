@@ -5,14 +5,12 @@ VECTOR_PATH = "database/vector.txt"
 VECTOR_BINARY = False
 
 def load_wv(path, binary=False):
-    """加载词向量，返回 (word2idx, vectors)。"""
     if binary:
         return _load_binary(path)
     return _load_text(path)
 
 
 def _load_text(path):
-    """加载 word2vec 文本格式。"""
     word2idx = {}
     with open(path, "r", encoding="utf-8") as f:
         first = f.readline().strip().split()
@@ -31,7 +29,6 @@ def _load_text(path):
 
 
 def _load_binary(path):
-    """加载 word2vec 二进制格式。"""
     word2idx = {}
     with open(path, "rb") as f:
         first = f.readline().decode("utf-8").strip().split()
@@ -54,7 +51,6 @@ def _load_binary(path):
 
 
 def cosine_sim(a, b):
-    """单对向量的余弦相似度（备用）。"""
     a = np.asarray(a, dtype=np.float32)
     b = np.asarray(b, dtype=np.float32)
     denom = np.linalg.norm(a) * np.linalg.norm(b)
@@ -64,7 +60,6 @@ def cosine_sim(a, b):
 
 
 def edit_distance(a, b):
-    """计算两个字符串的编辑距离。"""
     if a == b:
         return 0
     if not a:
@@ -85,7 +80,6 @@ def edit_distance(a, b):
 
 
 def get_word_vector(wv, word):
-    """获取词向量；整词不存在时直接遍历词库，按编辑距离找最相近的词。"""
     word2idx, vectors = wv
     if word in word2idx:
         return vectors[word2idx[word]]

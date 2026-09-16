@@ -4,6 +4,7 @@ import tools.tool_handler as tool
 import tools.bot as bot
 import tools.lang as lang
 import tools.tag_parser as tag_parser
+import tools.multymodalhandler as multymodel
 import copy,json,time,threading,os
 import tools.guide as guide
 if not os.path.exists('./logs'):
@@ -25,6 +26,7 @@ USR_COMMAND = [
     '#bot prompt',
     '#mem save',
     '#mem analyse',
+    '#mem compress',
     '#execute',
     '#memory',
     '#dream'
@@ -240,6 +242,13 @@ class CNMD():
                     post.append(self.messages[i])
                 memory.save(post)
                 self.msg_stack.append(lang.lang['cnmd.mem.save'])
+            elif cmd[1] == 'compress':
+                post = []
+                for i in self.msg:
+                    post.append(self.messages[i])
+                content = memory.compress(post)
+                self._reset(compress=content)
+                self.msg_stack.append(lang.lang['cnmd.mem.compress'])
             elif cmd[1] == 'analyse':
                 memory.analyse()
                 self.msg_stack.append(lang.lang['cnmd.mem.analyse'])
@@ -257,13 +266,15 @@ class CNMD():
         else:
             self._correction(ori_cmd)
     
-    def _reset(self):
+    def _reset(self,compress=None):
         bot.reload()
         with open('./config/config.json',encoding='utf-8') as f:
             self.config = json.load(f)
         self.TIME_STAMP = round(time.time())
         self.prompt = prompt.load('agent_base')
         self.nodelist['init'] = [0]
+        if compress != None:
+            self.prompt = f'{self.prompt}{lang.lang['bot.compress.log']}{compress}'
         self.messages = [
             {
                 "role":"system",
@@ -338,71 +349,7 @@ class CNMD():
         while True and self.mslock:
             if cmd == '[A]tool call feedback:\nPAUSE\n---\n':
                 return
-            if '<tool_call>image</tool_call>' in cmd:
-                self.messages.append(
-                    {
-                        "role":"user",
-                        "content": [
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{cmd.split('<tool_call>image</tool_call>')[1].split('\n')[0]}"
-                                }
-                            },
-                            {
-                                "type": "text",
-                                "text": lang.lang['bot.multimodel.imread']
-                            }
-                        ]
-                    }
-                )
-            elif '<tool_call>audio</tool_call>' in cmd:
-                self.messages.append(
-                    {
-                        "role":"user",
-                        "content": [
-                            {
-                                "type": "input_audio",
-                                "input_audio": {
-                                    "data": cmd.split('<tool_call>audio</tool_call>')[1].split('\n')[0],
-                                    "format": "audio/mp3"
-                                }
-                            },
-                            {
-                                "type": "text",
-                                "text": lang.lang['bot.multimodel.auread']
-                            }
-                        ]
-                    }
-                )
-            elif '<tool_call>video</tool_call>' in cmd:
-                self.messages.append(
-                    {
-                        "role":"user",
-                        "content": [
-                            {
-                                "type": "video_url",
-                                "video_url": {
-                                    "url": cmd.split('<tool_call>video</tool_call>')[1].split('\n')[0],
-                                    "format": "mp4",
-                                    "fps": 2,
-                                    "media_resolution": "default"
-                                }
-                            },
-                            {
-                                "type": "text",
-                                "text": lang.lang['bot.multimodel.viread']
-                            }
-                        ]
-                    }
-                )
-            else:
-                self.messages.append(
-                    {
-                        "role":"user",
-                        "content": cmd
-                    }
-                )
+            self.messages.append(multymodel.user(cmd))
             self.msg.append(self.tic)
             self.tic += 1
             post = []
@@ -410,8 +357,7 @@ class CNMD():
                 post.append(self.messages[i])
             response = bot.reply(post)
             #c = input()
-            #response = {"content":c,
-            #            "reasoning_content":None}
+            #response = {"content":c,"reasoning_content":"bruh!"}
             if response:
                 content = response.get('content')
                 reasoning_content = response.get('reasoning_content')
@@ -470,12 +416,12 @@ class CNMD():
                     if self.cmd_check != [] and self.cmd_check == calls:
                         if self.stage_break:
                             self.msg_stack.append(lang.lang['cnmd.bot.refuse'])
-                            self.cmd_check == []
+                            self.cmd_check = []
                             break
                         else:
                             self.msg_stack.append(lang.lang['cnmd.bot.refuse'])
                             cmd = lang.lang['bot.tool.refuse']
-                            self.cmd_check == []
+                            self.cmd_check = []
                     else:
                         self.cmd_check = copy.deepcopy(calls)
                         if not self.allow_cmd:

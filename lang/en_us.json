@@ -28,6 +28,7 @@
     "cnmd.mem.save":"[U] memory saved",
     "cnmd.mem.analyse":"[U] memory analysed",
     "cnmd.mem.search":"[U] searching memory",
+    "cnmd.mem.compress":"[U] context compressed",
     "cnmd.bot.toolfail":"[U] Agent tool call failed: ",
     "cnmd.bot.callfail":"[U] Command format incorrect. Clease check your command.",
     "cnmd.subagent.start":"[U] Task Queue started.",
@@ -74,6 +75,7 @@
     "bot.multimodel.auread":"[A] please read audio",
     "bot.multimodel.viread":"[A] please read video",
     "bot.mcp.getlistfailed":"[A] failed to get MCP list",
+    "bot.compress.log":"\nThis is the previous conversation information:\n",
     "subagent.task.gettasklist":"[S] please enter task file path(json)",
     "subagent.task.taskdone":"[S] all tasks finished"
 }

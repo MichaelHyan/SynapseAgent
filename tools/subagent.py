@@ -4,6 +4,7 @@ import tools.tool_handler as tool
 import tools.bot as bot
 import tools.lang as lang
 import tools.tag_parser as tag_parser
+import tools.multymodalhandler as multymodel
 import copy,json,time,threading,os,sys,subprocess
 if not os.path.exists('./logs'):
     os.makedirs('./logs')
@@ -66,83 +67,20 @@ class SubAgent():
         self.msg = self.nodelist['init']
         self.tic = 1
 
+    def log(self):
+        if self.enable_log:
+            with open(f'./logs/subagent{self.number}_{self.TIME_STAMP}.json','w',encoding='utf-8') as f:
+                json.dump(self.messages,f,indent=4,ensure_ascii=False)
+            with open(f'./logs/subagent{self.number}_{self.TIME_STAMP}_node.json','w',encoding='utf-8') as f:
+                json.dump(self.nodelist,f,indent=4,ensure_ascii=False)
+            with open(f'./logs/subagent{self.number}_{self.TIME_STAMP}_tool.json','w',encoding='utf-8') as f:
+                json.dump(self.toolcall,f,indent=4,ensure_ascii=False)
+
     def submission(self):
         msg_stack.append(f'SubAgent{self.number}: START')
         cmd = copy.deepcopy(self.task)
         while True:
-            if cmd[:3] == '#I#':
-                self.messages.append(
-                    {
-                        "role":"user",
-                        "content": [
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{cmd[3:]}"
-                                }
-                            },
-                            {
-                                "type": "text",
-                                "text": lang.lang['bot.multimodel.imread']
-                            }
-                        ]
-                    }
-                )
-            elif cmd[:3] == '#A#':
-                self.messages.append(
-                    {
-                        "role":"user",
-                        "content": [
-                            {
-                                "type": "input_audio",
-                                "input_audio": {
-                                    "data": cmd[3:],
-                                    "format": "audio/mp3"
-                                }
-                            },
-                            {
-                                "type": "text",
-                                "text": lang.lang['bot.multimodel.auread']
-                            }
-                        ]
-                    }
-                )
-            elif cmd[:3] == '#V#':
-                self.messages.append(
-                    {
-                        "role":"user",
-                        "content": [
-                            {
-                                "type": "video_url",
-                                "video_url": {
-                                    "url": cmd[3:],
-                                    "format": "mp4",
-                                    "fps": 2,
-                                    "media_resolution": "default"
-                                }
-                            },
-                            {
-                                "type": "text",
-                                "text": lang.lang['bot.multimodel.viread']
-                            }
-                        ]
-                    }
-                )
-            else:
-                if len(self.messages) == 1:
-                    self.messages.append(
-                        {
-                            "role":"user",
-                            "content": cmd
-                        }
-                    )
-                else:
-                    self.messages.append(
-                        {
-                            "role":"user",
-                            "content": cmd
-                        }
-                    )
+            self.messages.append(multymodel.user(cmd))
             self.msg.append(self.tic)
             self.tic += 1
             post = []
@@ -178,13 +116,7 @@ class SubAgent():
                 self.msg.append(self.tic)
                 self.tic += 1
                 self.toolcall.append(['none'])
-                if self.enable_log:
-                    with open(f'./logs/subagent{self.number}_{self.TIME_STAMP}.json','w',encoding='utf-8') as f:
-                        json.dump(self.messages,f,indent=4,ensure_ascii=False)
-                    with open(f'./logs/subagent{self.number}_{self.TIME_STAMP}_node.json','w',encoding='utf-8') as f:
-                        json.dump(self.nodelist,f,indent=4,ensure_ascii=False)
-                    with open(f'./logs/subagent{self.number}_{self.TIME_STAMP}_tool.json','w',encoding='utf-8') as f:
-                        json.dump(self.toolcall,f,indent=4,ensure_ascii=False)
+                self.log()
             elif calls == [] and '<tool_call>' in content:
                 if text == '':
                     msg_stack.append(f'SubAgent{self.number}:{lang.lang['cnmd.bot.responsefailcontinue']}')
@@ -199,13 +131,7 @@ class SubAgent():
                 self.msg.append(self.tic)
                 self.tic += 1
                 self.toolcall.append(['none'])
-                if self.enable_log:
-                    with open(f'./logs/subagent{self.number}_{self.TIME_STAMP}.json','w',encoding='utf-8') as f:
-                        json.dump(self.messages,f,indent=4,ensure_ascii=False)
-                    with open(f'./logs/subagent{self.number}_{self.TIME_STAMP}_node.json','w',encoding='utf-8') as f:
-                        json.dump(self.nodelist,f,indent=4,ensure_ascii=False)
-                    with open(f'./logs/subagent{self.number}_{self.TIME_STAMP}_tool.json','w',encoding='utf-8') as f:
-                        json.dump(self.toolcall,f,indent=4,ensure_ascii=False)
+                self.log()
                 cmd = lang.lang['cnmd.bot.callfail']
             else:
                 self.messages.append(
@@ -217,13 +143,7 @@ class SubAgent():
                 self.msg.append(self.tic)
                 self.tic += 1
                 self.toolcall.append(calls)
-                if self.enable_log:
-                    with open(f'./logs/subagent{self.number}_{self.TIME_STAMP}.json','w',encoding='utf-8') as f:
-                        json.dump(self.messages,f,indent=4,ensure_ascii=False)
-                    with open(f'./logs/subagent{self.number}_{self.TIME_STAMP}_node.json','w',encoding='utf-8') as f:
-                        json.dump(self.nodelist,f,indent=4,ensure_ascii=False)
-                    with open(f'./logs/subagent{self.number}_{self.TIME_STAMP}_tool.json','w',encoding='utf-8') as f:
-                        json.dump(self.toolcall,f,indent=4,ensure_ascii=False)
+                self.log()
                 try:
                     if self.cmd_check != [] and self.cmd_check == calls:
                         msg_stack.append(f'SubAgent{self.number}:{lang.lang['cnmd.bot.refuse']}')

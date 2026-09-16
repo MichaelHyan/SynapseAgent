@@ -104,18 +104,27 @@ def mem(args:str):
     return {'sys':sys,
             'cli':lang.lang['cnmd.mem.search']}
 
-def imread(path:str):
-    sys = fileedit.encode(path,'<tool_call>image</tool_call>')
+def image_read(path:str):
+    if 'http' in path:
+        sys = f'<tool_call>imageurl</tool_call>{path}'
+    else:
+        sys = fileedit.encode(path,'<tool_call>image</tool_call>')
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.imread']}{path}'}
 
-def auread(path:str):
-    sys = fileedit.encode(path,'<tool_call>audio</tool_call>')
+def audio_read(path:str):
+    if 'http' in path:
+        sys = f'<tool_call>audiourl</tool_call>{path}'
+    else:
+        sys = fileedit.encode(path,'<tool_call>audio</tool_call>')
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.auread']}{path}'}
 
-def viread(path:str):
-    sys = fileedit.encode(path,'<tool_call>video</tool_call>')
+def video_read(path:str):
+    if 'http' in path:
+        sys = f'<tool_call>videourl</tool_call>{path}'
+    else:
+        sys = fileedit.encode(path,'<tool_call>video</tool_call>')
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.viread']}{path}'}
 
