@@ -48,6 +48,8 @@
     "bot.agentlog.auread":"[D] reading audio: ",
     "bot.agentlog.viread":"[D] reading vider: ",
     "bot.agentlog.screenshot":"[D] checking screenshot",
+    "bot.agentlog.click":"[D] click: ",
+    "bot.agentlog.typewrite":"[D] write: ",
     "bot.agentlog.webgrab":"[D] grabbing website: ",
     "bot.agentlog.setheader":"[D] web header set: ",
     "bot.agentlog.ping":"[D] pinging server: ",

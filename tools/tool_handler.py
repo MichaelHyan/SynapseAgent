@@ -1,4 +1,4 @@
-from tools import fileedit,runcmd,webgrab,timer,memory,skills,lang,mcp_call,subagent,screenshot
+from tools import fileedit,runcmd,webgrab,timer,memory,skills,lang,mcp_call,subagent,screenshot,autogui
 import json,threading,time
 def tool(function:str):
     function = function.replace('<tool_call>','').replace('</tool_call>','')
@@ -139,6 +139,44 @@ def screen(args=None):
     sys = screenshot.capture_all_base64(prefix='image')
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.screenshot']}'}
+
+def screen_cord(args=None):
+    if args == None:
+        cord = screenshot.get_screen_cord()
+    else:
+        cord = screenshot.get_screen_cord(eval(args))
+    return {
+        "sys": f'{cord['cord']}<image>{cord['image']}</image>',
+        'cli': f'{lang.lang['bot.agentlog.screenshot']}'
+    }
+
+def click(args:str):
+    args = args.split()
+    args_temp = []
+    for i in range(0,4):
+        try:
+            args_temp.append(args[i])
+        except:
+            if i == 2:
+                args_temp.append('left')
+            if i == 3:
+                args_temp.append('1')
+    autogui.click(args_temp[0],args_temp[1],args_temp[2],args_temp[3])
+    time.sleep(1)
+    cord = screenshot.get_screen_cord()
+    return {
+        "sys": f'{cord['cord']}<image>{cord['image']}</image>',
+        'cli': f'{lang.lang['bot.agentlog.click']}{args_temp}'
+    }
+
+def typewrite(args:str):
+    autogui.typewrite(args)
+    time.sleep(1)
+    cord = screenshot.get_screen_cord()
+    return {
+        "sys": f'{cord['cord']}<image>{cord['image']}</image>',
+        'cli': f'{lang.lang['bot.agentlog.typewrite']}{args}'
+    }
 
 def skill(args=None):
     if args == None:
