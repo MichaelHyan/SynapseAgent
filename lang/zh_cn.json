@@ -43,6 +43,7 @@
     "bot.agentlog.read":"[D] 读取文件: ",
     "bot.agentlog.write":"[D] 写入文件: ",
     "bot.agentlog.delete":"[D] 删除文件: ",
+    "bot.agentlog.search":"[D] 搜索字符: ",
     "bot.agentlog.time":"[D] 查看时间",
     "bot.agentlog.imread":"[D] 读取图片: ",
     "bot.agentlog.auread":"[D] 读取音频: ",

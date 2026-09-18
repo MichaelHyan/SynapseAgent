@@ -9,8 +9,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('name', nargs='?', default='agent_base')
 args = parser.parse_args()
 
-cnm = CNMD.CNMD()
-cnm.set_prompt(args.name)
+cnm = CNMD.CNMD(args.name)
 
 is_reasoning = False
 BAR = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'

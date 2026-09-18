@@ -58,7 +58,7 @@ def capture_all_base64(fmt: str = "PNG", data_uri: bool = False, prefix = '') ->
     buf = io.BytesIO()
     img.save(buf, format=fmt)
     b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
-    return f"{prefix}{b64}"
+    return f"<{prefix}>{b64}</{prefix}>"
 
 if __name__ == "__main__":
     print(capture_all_base64())

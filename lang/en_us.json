@@ -43,6 +43,7 @@
     "bot.agentlog.read":"[D] reading file: ",
     "bot.agentlog.write":"[D] writing file: ",
     "bot.agentlog.delete":"[D] deleting file: ",
+    "bot.agentlog.search":"[D] search string: ",
     "bot.agentlog.time":"[D] checking time",
     "bot.agentlog.imread":"[D] reading image: ",
     "bot.agentlog.auread":"[D] reading audio: ",

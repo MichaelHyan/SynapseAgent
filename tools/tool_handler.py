@@ -47,6 +47,13 @@ def delete(path:str):
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.delete']}{path}'}
 
+def search_string(args:str):
+    path,content = args.split(maxsplit=1)
+    content = content.split()
+    sys = fileedit.search_string(root=path,patterns=content)
+    return {'sys':sys,
+            'cli':f'{lang.lang['bot.agentlog.search']}{content}'}
+
 def cmd(args:str):
     runcmd.cmd_output=''
     threading.Thread(target=runcmd.cmd, args=(args,)).start()
@@ -106,30 +113,30 @@ def mem(args:str):
 
 def image_read(path:str):
     if 'http' in path:
-        sys = f'<tool_call>imageurl</tool_call>{path}'
+        sys = f'<imageurl>{path}</imageurl>'
     else:
-        sys = fileedit.encode(path,'<tool_call>image</tool_call>')
+        sys = fileedit.encode(path,'image')
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.imread']}{path}'}
 
 def audio_read(path:str):
     if 'http' in path:
-        sys = f'<tool_call>audiourl</tool_call>{path}'
+        sys = f'<audiourl>{path}</audiourl>'
     else:
-        sys = fileedit.encode(path,'<tool_call>audio</tool_call>')
+        sys = fileedit.encode(path,'audio')
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.auread']}{path}'}
 
 def video_read(path:str):
     if 'http' in path:
-        sys = f'<tool_call>videourl</tool_call>{path}'
+        sys = f'<videourl>{path}</videourl>'
     else:
-        sys = fileedit.encode(path,'<tool_call>video</tool_call>')
+        sys = fileedit.encode(path,'video')
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.viread']}{path}'}
 
 def screen(args=None):
-    sys = screenshot.capture_all_base64(prefix='<tool_call>image</tool_call>')
+    sys = screenshot.capture_all_base64(prefix='image')
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.screenshot']}'}
 
@@ -164,5 +171,5 @@ def mcp(args:str=None):
 
 def taskstart(args=None):
     subagent.startsubagent()
-    return {'sys':'PAUSE',
+    return {'sys':'<tool_call>PAUSE</tool_call>',
             'cli':f'{lang.lang['cnmd.subagent.start']}'}

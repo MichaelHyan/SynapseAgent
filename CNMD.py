@@ -33,12 +33,13 @@ USR_COMMAND = [
     ]
 
 class CNMD():
-    def __init__(self,prompt = prompt):
+    def __init__(self,prompt_init = 'agent_base'):
         with open('./config/config.json',encoding='utf-8') as f:
             self.config = json.load(f)
         self.TIME_STAMP = round(time.time())
         self.stage_break = self.config['break']
-        self.prompt = prompt.load('agent_base')
+        self.prompt_init = prompt_init
+        self.prompt = prompt.load(self.prompt_init)
         self.msg_stack = []
         self.nodelist = {}
         self.nodelist['init'] = [0]
@@ -79,6 +80,7 @@ class CNMD():
 4. 记忆能力
 #mem save                 - 总结记忆
 #mem analyse              - 整理记忆
+#mem compress             - 压缩上文
 
 5. 执行任务
 #execute <序号>            - 执行Agent申请的指令
@@ -271,7 +273,7 @@ class CNMD():
         with open('./config/config.json',encoding='utf-8') as f:
             self.config = json.load(f)
         self.TIME_STAMP = round(time.time())
-        self.prompt = prompt.load('agent_base')
+        self.prompt = prompt.load(self.prompt_init)
         self.nodelist['init'] = [0]
         if compress != None:
             self.prompt = f'{self.prompt}{lang.lang['bot.compress.log']}{compress}'
@@ -286,7 +288,8 @@ class CNMD():
         self.msg_stack.append(lang.lang['cnmd.bot.reset'])
 
     def set_prompt(self,p):
-        self.prompt = prompt.load(p)
+        self.prompt_init = p
+        self.prompt = prompt.load(self.prompt_init)
         self.TIME_STAMP = round(time.time())
         self.nodelist = {}
         self.nodelist['init'] = [0]
@@ -347,7 +350,7 @@ class CNMD():
 
         self.mstemp = copy.deepcopy(self.msg)
         while True and self.mslock:
-            if cmd == '[A]tool call feedback:\nPAUSE\n---\n':
+            if '<tool_call>PAUSE</tool_call>' in cmd:
                 return
             self.messages.append(multymodel.user(cmd))
             self.msg.append(self.tic)

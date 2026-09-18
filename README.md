@@ -69,7 +69,7 @@ pip install -r requirements.txt
 
 ### 2. 配置
 
-主要配置文件位于`./database`目录下，包含：
+主要配置文件位于`./config`目录下，包含：
 - config.json 默认为空，初次启动CLI会自动进入引导程序辅助创建
 - config_model.json 默认为空，可加入openai接口参数
 - config_mcp.json 保存mcp配置信息

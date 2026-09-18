@@ -1,6 +1,6 @@
 import os,base64,shutil
 import tools.lang as lang
-import json
+import json,re
 with open('./config/config.json',encoding='utf-8') as f:
     config = json.load(f)
 
@@ -72,9 +72,9 @@ def delete(path):
     except Exception as e:
         return str(e)
 
-def encode(path,prex=''):
+def encode(path,prex):
     with open(path, "rb") as file:
-        return f'{prex}{base64.b64encode(file.read()).decode("utf-8")}'
+        return f'<{prex}>{base64.b64encode(file.read()).decode("utf-8")}</{prex}>'
 
 def backup(src_dir, dst_dir='./bak/'):
     if not os.path.exists(src_dir):
@@ -119,3 +119,174 @@ def list_dir(path):
         for filename in filenames:
             response += f" - [FILE] {filename}"
     return response
+
+CASE_SENSITIVE = False
+USE_REGEX = False
+EXCLUDE_DIRS = [
+    ".git",
+    ".idea",
+    ".vscode",
+    "__pycache__",
+    "node_modules",
+    "venv",
+    ".venv",
+    "env",
+    "dist",
+    "build",
+]
+
+EXCLUDE_EXTS = [
+    ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico", ".webp", ".svg",
+    ".exe", ".dll", ".so", ".dylib", ".bin", ".dat",
+    ".zip", ".rar", ".7z", ".gz", ".tar", ".jar",
+    ".pyc", ".pyo", ".pyd", ".pdb",
+    ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+    ".mp3", ".mp4", ".avi", ".mov", ".wav", ".flv",
+    ".ttf", ".otf", ".woff", ".woff2", ".eot",
+    ".sqlite", ".db",
+]
+ENCODINGS = ["utf-8", "utf-8-sig", "gbk", "latin-1"]
+FOLLOW_SYMLINKS = False
+MAX_LINE_PREVIEW = 200
+SKIP_HIDDEN = False
+
+def _build_matcher(patterns, use_regex, case_sensitive):
+    errors = []
+    compiled = []
+
+    for p in patterns:
+        if use_regex:
+            flags = 0 if case_sensitive else re.IGNORECASE
+            try:
+                compiled.append(("regex", re.compile(p, flags)))
+            except re.error as e:
+                errors.append((p, str(e)))
+                compiled.append(("regex", None))  # 占位，保持下标对齐
+        else:
+            compiled.append(("text", p if case_sensitive else p.lower()))
+
+    def match_func(line):
+        hits = []
+        haystack = line if case_sensitive else line.lower()
+        for idx, (kind, obj) in enumerate(compiled):
+            if kind == "regex":
+                if obj is not None and obj.search(line):
+                    hits.append(idx)
+            else:
+                if obj and obj in haystack:
+                    hits.append(idx)
+        return hits
+
+    return match_func, errors
+
+
+def _iter_files(root, exclude_dirs, exclude_exts, skip_hidden, follow_symlinks):
+    exclude_dirs_set = set(exclude_dirs)
+    exclude_exts_set = set(e.lower() for e in exclude_exts)
+
+    for dirpath, dirnames, filenames in os.walk(root, followlinks=follow_symlinks):
+        dirnames[:] = [
+            d for d in dirnames
+            if d not in exclude_dirs_set and not (skip_hidden and d.startswith("."))
+        ]
+
+        for name in filenames:
+            if skip_hidden and name.startswith("."):
+                continue
+            ext = os.path.splitext(name)[1].lower()
+            if ext in exclude_exts_set:
+                continue
+            yield os.path.join(dirpath, name)
+
+
+def _read_text_lines(path, encodings):
+    last_err = None
+    for enc in encodings:
+        try:
+            with open(path, "r", encoding=enc, errors="strict") as f:
+                return f.read().splitlines(), enc, None
+        except (UnicodeDecodeError, LookupError) as e:
+            last_err = e
+            continue
+        except OSError as e:
+            return None, None, e
+
+    try:
+        fallback_enc = encodings[0] if encodings else "utf-8"
+        with open(path, "r", encoding=fallback_enc, errors="ignore") as f:
+            return f.read().splitlines(), fallback_enc + "(ignore)", None
+    except OSError as e:
+        return None, None, e if last_err is None else last_err
+
+
+def _truncate_line(line, limit):
+    if limit and len(line) > limit:
+        return line[:limit] + " ... "
+    return line
+
+def search_string(root,patterns):
+    root = os.path.abspath(root)
+    match_func, regex_errors = _build_matcher(patterns, USE_REGEX, CASE_SENSITIVE)
+    search_result = ''
+    max_size_bytes = 300 * 1024 * 1024
+    results = []
+    stats = {
+        "scanned": 0,
+        "skipped_big": 0,
+        "skipped_unreadable": 0,
+        "files": 0,
+        "lines": 0,
+        "per_pattern": {},
+    }
+    for p in patterns:
+        stats["per_pattern"][p] = 0
+
+    for filepath in _iter_files(root, EXCLUDE_DIRS, EXCLUDE_EXTS, SKIP_HIDDEN, FOLLOW_SYMLINKS):
+        # 文件名匹配：文件名也可作为目标字符的命中项
+        filename = os.path.basename(filepath)
+        name_matched = match_func(filename)
+
+        file_hits = []
+        skip_content = False
+        try:
+            if max_size_bytes > 0 and os.path.getsize(filepath) > max_size_bytes:
+                stats["skipped_big"] += 1
+                skip_content = True
+        except OSError:
+            stats["skipped_unreadable"] += 1
+            skip_content = True
+
+        if not skip_content:
+            lines, encoding, error = _read_text_lines(filepath, ENCODINGS)
+            if lines is None:
+                stats["skipped_unreadable"] += 1
+            else:
+                stats["scanned"] += 1
+                for lineno, line in enumerate(lines, start=1):
+                    matched = match_func(line)
+                    if matched:
+                        file_hits.append((lineno, matched, _truncate_line(line.strip(), MAX_LINE_PREVIEW)))
+                        stats["lines"] += 1
+                        for i in matched:
+                            stats["per_pattern"][patterns[i]] += 1
+
+        # 文件名命中或内容命中，均将该文件计入统计
+        if name_matched or file_hits:
+            stats["files"] += 1
+            for i in name_matched:
+                stats["per_pattern"][patterns[i]] += 1
+            results.append((filepath, name_matched, file_hits))
+
+    if not results:
+        return 'None'
+    else:
+        for filepath, name_matched, hits in results:
+            search_result += "file:%s" % filepath
+            search_result += '\n'
+            if name_matched:
+                search_result += "  [name] %s" % os.path.basename(filepath)
+                search_result += '\n'
+            for lineno, matched, text in hits:
+                search_result += "  [line %d] %s" % (lineno, text)
+                search_result += '\n'
+    return search_result
