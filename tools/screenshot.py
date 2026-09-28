@@ -63,11 +63,13 @@ def capture_all_base64(fmt: str = "PNG", data_uri: bool = False, prefix = '') ->
     b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
     return f"<{prefix}>{b64}</{prefix}>"
 
-def get_screen_cord(cord = [0,0,0,0]):
+def get_screen_cord(cord = [0,0,0,0],index = 0):
     if cord == [0,0,0,0]:
         screen = ImageGrab.grab()
+        offset_x, offset_y = 0, 0
     else:
         screen = ImageGrab.grab(bbox=(cord[0],cord[1],cord[2],cord[3]))
+        offset_x, offset_y = cord[0], cord[1]
     img = cv2.cvtColor(np.array(screen), cv2.COLOR_RGB2BGR)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -96,10 +98,10 @@ def get_screen_cord(cord = [0,0,0,0]):
     for (x, y, w, h) in boxes:
         cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 2)
 
-    centers = 'Coordinates:\n'
+    centers = ''
 
     for idx, (x, y, w, h) in enumerate(boxes, start=1):
-        label = str(idx)
+        label = str(idx+index)
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_scale = 0.9
         thickness = 2
@@ -115,13 +117,14 @@ def get_screen_cord(cord = [0,0,0,0]):
 
         cv2.putText(img, label, (tx, ty), font, font_scale, (0, 255, 0), thickness)
 
-        cx = x + w // 2
-        cy = y + h // 2
-        centers += f'{idx}=>({cx},{cy})\n'
+        cx = x + w // 2 + offset_x
+        cy = y + h // 2 + offset_y
+        centers += f'{idx+index}=>({cx},{cy})\n'
 
     cv2.imwrite('./database/screen.png', img)
 
     with open('./database/screen.png', 'rb') as f:
         b64 = base64.b64encode(f.read()).decode('utf-8')
-    return {"cord":centers,
-            "image":b64}
+    return {"cord":centers.strip(),
+            "image":b64,
+            "last_index":idx}

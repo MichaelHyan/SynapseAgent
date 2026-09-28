@@ -16,6 +16,7 @@
     "cnmd.node.backwardunable":"[U] 回退节点失败",
     "cnmd.node.backward":"[U] 回退节点成功",
     "cnmd.log.filenotfound":"[U] 未找到文件",
+    "cnmd.bot.reasoning":"思考中...",
     "cnmd.bot.reasoningon":"[U] 启用Agent思考显示",
     "cnmd.bot.reasoningoff":"[U] 禁用Agent思考显示",
     "cnmd.bot.setprompt":"[U] 已设置系统提示词",

@@ -38,7 +38,7 @@ def input_thread():
                 threading.Thread(target=agent_thread).start()
                 print(f'{Color.WHITE}{"─" * (os.get_terminal_size().columns-1)}{Color.RESET}')
                 is_reasoning = True
-            elif user_input == '#pause':
+            elif user_input == '#pause' or user_input == '#p':
                 print(f'{Color.RED}{lang.lang['cnmd.base.pause']}{Color.RESET}')
                 cnm.mslock = False
             elif user_input == '#exit':
@@ -84,7 +84,7 @@ def reasoning_thread():
     
     while True:
         if is_reasoning:
-            sys.stdout.write(f'\r{Color.GREEN}{BAR[i % len(BAR)]}{Color.RESET} 思考中...')
+            sys.stdout.write(f'\r{Color.GREEN}{BAR[i % len(BAR)]}{Color.RESET} {lang.lang['cnmd.bot.reasoning']}')
             sys.stdout.flush()
             i += 1
             prev_is_reasoning = True

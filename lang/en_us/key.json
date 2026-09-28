@@ -16,6 +16,7 @@
     "cnmd.node.backwardunable":"[U] node backward failed",
     "cnmd.node.backward":"[U] node backward complete",
     "cnmd.log.filenotfound":"[U] file not found",
+    "cnmd.bot.reasoning":"reasoning...",
     "cnmd.bot.reasoningon":"[U] bot reasoning on",
     "cnmd.bot.reasoningoff":"[U] bot reasoning off",
     "cnmd.bot.setprompt":"[U] bot prompt set",

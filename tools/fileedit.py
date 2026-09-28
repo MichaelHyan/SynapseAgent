@@ -51,11 +51,6 @@ def read(path:str):
 
 def write(path, content):
     try:
-        '''
-        content_size = len(content.encode('utf-8'))
-        if content_size > SIZE_LIMIT * 1024 * 1024:
-            return f'[A] 内容过大 ({content_size} bytes)，超过{SIZE_LIMIT}MB限制，无法写入'
-        '''
         with open(path, 'w', encoding = 'utf-8') as f:
             f.write(content)
         return lang.lang['bot.tool.filewritedone']
@@ -161,7 +156,7 @@ def _build_matcher(patterns, use_regex, case_sensitive):
                 compiled.append(("regex", re.compile(p, flags)))
             except re.error as e:
                 errors.append((p, str(e)))
-                compiled.append(("regex", None))  # 占位，保持下标对齐
+                compiled.append(("regex", None))
         else:
             compiled.append(("text", p if case_sensitive else p.lower()))
 
@@ -242,7 +237,6 @@ def search_string(root,patterns):
         stats["per_pattern"][p] = 0
 
     for filepath in _iter_files(root, EXCLUDE_DIRS, EXCLUDE_EXTS, SKIP_HIDDEN, FOLLOW_SYMLINKS):
-        # 文件名匹配：文件名也可作为目标字符的命中项
         filename = os.path.basename(filepath)
         name_matched = match_func(filename)
 
@@ -270,7 +264,6 @@ def search_string(root,patterns):
                         for i in matched:
                             stats["per_pattern"][patterns[i]] += 1
 
-        # 文件名命中或内容命中，均将该文件计入统计
         if name_matched or file_hits:
             stats["files"] += 1
             for i in name_matched:

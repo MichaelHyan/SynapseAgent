@@ -58,6 +58,6 @@ def download(CDN_BASE_URL,ENCRYPT_QUERY_PARAM,AES_KEY,SAVE_PATH):
             aes_key=AES_KEY,
             save_path=SAVE_PATH
         )
-        print(f"\n[downloader] 文件已下载并解密")
+        print(f"\n[downloader] downloaded")
     except Exception as e:
         print(f"\n[downloader] {e}")

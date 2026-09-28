@@ -6,7 +6,7 @@ with open('./config/config.json',encoding='utf-8') as f:
 with open('./prompt_loader/config.json',encoding='utf-8') as f:
     config = json.load(f)
 
-def load(prp):
+def load(prp:str):
     prompt = ''
     try:
         p = config[prp]
