@@ -17,7 +17,8 @@ def get_complex_cord():
                 y*540,
                 x*960+960 if x*960+960 <= WIDTH else WIDTH,
                 y*540+540 if y*540+540 <= HIGHT else HIGHT),
-                index = index))
+                index = index,
+                path=f'./database/screen_{x}_{y}.png'))
             index += cords[-1]['last_index']
     image = screenshot.capture_all_base64(prefix='image')
     cord = ''

@@ -63,7 +63,7 @@ def capture_all_base64(fmt: str = "PNG", data_uri: bool = False, prefix = '') ->
     b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
     return f"<{prefix}>{b64}</{prefix}>"
 
-def get_screen_cord(cord = [0,0,0,0],index = 0):
+def get_screen_cord(cord = [0,0,0,0],index = 0,path='./database/screen.png'):
     if cord == [0,0,0,0]:
         screen = ImageGrab.grab()
         offset_x, offset_y = 0, 0
@@ -121,9 +121,9 @@ def get_screen_cord(cord = [0,0,0,0],index = 0):
         cy = y + h // 2 + offset_y
         centers += f'{idx+index}=>({cx},{cy})\n'
 
-    cv2.imwrite('./database/screen.png', img)
+    cv2.imwrite(path, img)
 
-    with open('./database/screen.png', 'rb') as f:
+    with open(path, 'rb') as f:
         b64 = base64.b64encode(f.read()).decode('utf-8')
     return {"cord":centers.strip(),
             "image":b64,
