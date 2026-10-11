@@ -235,13 +235,13 @@ python SynapseAgent.py 我的预设
 
 不同于普通的 `Memory.md`，记忆数据库具备独立的向量式存储，支持智能检索与关联。
 
-- **存储**：`database/mem.json` 存放记忆键值，`database/relate.json` 存放关联关系。
+- **存储**：`database/mem.json` 存放记忆键值。
 - **检索**：Agent 在需要时可自动使用 `$mem` 关键词搜索记忆。
 - **手动管理**：
   - `#mem save`  将当前对话关键信息写入记忆库
   - `#mem analyse`  整理压缩记忆库
 
-注：当前不再使用记忆关联系统，而是内置语义向量数据库，位于./database/vector.txt，需要可自行替换语义向量文件。
+记忆搜索系统使用本地向量数据库，使用语义向量搜索。
 
 当前数据来源：[TX-WORD2VEC-SMALL](https://github.com/cliuxinxin/TX-WORD2VEC-SMALL)，使用45000-small.txt。
 
