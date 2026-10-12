@@ -356,18 +356,78 @@ python server.py
 
 ---
 
-## 💻 TUI(测试版)
+## 💻 服务器模式
 
-TUI与CLI版前端基本一致，输入改为直接回车输入。
+SynapseAgent可使用http服务器实现本地/局域网信息交换。
 
-本模式尚处于测试阶段，如需使用，请确保已安装第三方库prompt_toolkit，之后使用python SynapseAgentTUI.py启动。
+使用server.py启动服务器模式，默认端口号56700。
 
-## ⚠️ 注意事项
+body参数：
+```json
+/*连通性测试*/
+{
+    "method":"ping"
+}
+/*返回结果*/
+{
+    "status": 0,
+    "response": ""
+}
 
-- 请务必在 `config.json` 中正确配置 API 信息和工作目录。
-- Agent 对文件的操作是真实的，请提前备份重要数据。
-- 如需启用多模态，确保所用模型支持图片/音频/视频信息的理解。
-- 本系统使用自定义工具链，不依赖 OpenAI 的 `tool_calling` API。
+/*向Agent发送信息*/
+{
+    "method":"ask",
+    "params":{
+        "content": [发送信息]
+    }
+}
+/*返回结果*/
+{
+    "status": 1,
+    "response": ""
+}
+
+/*接收信息，同时更新消息队列(接收队列中第一条信息，同时删除队列最晚的信息)*/
+{
+    "method":"answer",
+    "params":{
+        "type":"rp"
+    }
+}
+/*返回结果*/
+{
+    "status": [回答状体],
+    "response": [返回信息]
+}
+
+/*接收所有记录信息，不更改消息队列(接受整个消息队列)*/
+{
+    "method":"answer",
+    "params":{
+        "type":"rl"
+    }
+}
+/*返回结果*/
+{
+    "status": [回答状态],
+    "response": [全部信息]
+}
+```
+
+回答状态表示agent当前是否在回答循环中，0表示不在循环状态，1表示循环中。
+
+rp模式下，如仍有未接受的信息，或Agent未结束作答，回答状态均返回1。
+
+rl模式下，回答状态仅表示Agent是否正在回答。
+
+调用示例(powershell)
+
+```bash
+Invoke-RestMethod -Uri "http://127.0.0.1:56700/cnmd" `
+    -Method Post `
+    -ContentType "application/json; charset=utf-8" `
+    -Body '{"method":"ask","params":{"content":"你好"}}'
+```
 
 ---
 

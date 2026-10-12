@@ -1,5 +1,8 @@
 from tools import fileedit,runcmd,webgrab,timer,memory,skills,lang,mcp_call,subagent,screenshot,autogui
 import json,threading,time
+
+_REGISTRY = {}
+
 def tool(function:str):
     function = function.replace('<tool_call>','').replace('</tool_call>','')
     if function[0] == '\n':
@@ -10,43 +13,56 @@ def tool(function:str):
         function,args = function.strip().split(maxsplit=1)
     except:
         args = None
-    func = globals().get(function)
+    func = _REGISTRY.get(function)
     if func:
         result = func(args)
     else:
         result = notfound(function)
     return result
 
+def method(name=None):
+    def deco(func):
+        _REGISTRY[name or func.__name__] = func
+        return func
+    return deco
+
+@method()
 def notfound(e):
     return {'sys':lang.lang['bot.tool.commandnotfound'],
             'cli':f'{lang.lang['cnmd.bot.toolfail']}{e}'}
 
+@method()
 def dir(path:str):
     sys = fileedit.dir(path)
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.dir']}{path}'}
 
+@method()
 def listdir(path:str):
     sys = cmd = fileedit.list_dir(path)
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.listdir']}{path}'}
 
+@method()
 def read(args:str):
     sys = fileedit.read(args)
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.read']}{args}'}
 
+@method()
 def write(args:str):
     path,content = args.split(maxsplit=1)
     sys = fileedit.write(path,content)
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.write']}{path}'}
 
+@method()
 def delete(path:str):
     sys = fileedit.delete(path)
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.delete']}{path}'}
 
+@method()
 def search_string(args:str):
     path,content = args.split(maxsplit=1)
     content = content.split()
@@ -54,6 +70,7 @@ def search_string(args:str):
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.search']}{content}'}
 
+@method()
 def cmd(args:str):
     runcmd.cmd_output=''
     threading.Thread(target=runcmd.cmd, args=(args,)).start()
@@ -61,10 +78,12 @@ def cmd(args:str):
     return {'sys':runcmd.cmd_output,
             'cli':f'{lang.lang['bot.agentlog.cmd']}{args}'}
 
+@method()
 def cmdresult(args=None):
     return {'sys':runcmd.cmd_output,
             'cli':f'{lang.lang['bot.agentlog.cmdresult']}'}
 
+@method()
 def powershell(args:str):
     runcmd.cmd_output=''
     threading.Thread(target=runcmd.pws, args=(args,)).start()
@@ -72,15 +91,18 @@ def powershell(args:str):
     return {'sys':runcmd.cmd_output,
             'cli':f'{lang.lang['bot.agentlog.powershell']}{args}'}
 
+@method()
 def powershellresult(args=None):
     return {'sys':runcmd.cmd_output,
             'cli':f'{lang.lang['bot.agentlog.cmdresult']}'}
 
+@method()
 def timeread(args=None):
     sys = timer.timer()
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.time']}'}
 
+@method()
 def web(args:str):
     if len(args.split(maxsplit=1)) == 1:
         sys = webgrab.get_html(args)
@@ -101,6 +123,7 @@ def web(args:str):
             return {'sys':f'{lang.lang['bot.tool.setheader']}{content}',
                     'cli':f'{lang.lang['bot.agentlog.setheader']}{content}'}
 
+@method()
 def mem(args:str):
     mem = memory.mem_load(args)
     if mem != None:
@@ -111,6 +134,7 @@ def mem(args:str):
     return {'sys':sys,
             'cli':lang.lang['cnmd.mem.search']}
 
+@method()
 def image_read(path:str):
     if 'http' in path:
         sys = f'<imageurl>{path}</imageurl>'
@@ -119,6 +143,7 @@ def image_read(path:str):
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.imread']}{path}'}
 
+@method()
 def audio_read(path:str):
     if 'http' in path:
         sys = f'<audiourl>{path}</audiourl>'
@@ -127,6 +152,7 @@ def audio_read(path:str):
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.auread']}{path}'}
 
+@method()
 def video_read(path:str):
     if 'http' in path:
         sys = f'<videourl>{path}</videourl>'
@@ -135,11 +161,13 @@ def video_read(path:str):
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.viread']}{path}'}
 
+@method()
 def screen(args=None):
     sys = screenshot.capture_all_base64(prefix='image')
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.screenshot']}'}
 
+@method()
 def screen_cord(args=None):
     if args == None:
         cord = screenshot.get_screen_cord()
@@ -150,6 +178,7 @@ def screen_cord(args=None):
         'cli': f'{lang.lang['bot.agentlog.screenshot']}'
     }
 
+@method()
 def click(args:str):
     args = args.split()
     args_temp = []
@@ -169,6 +198,7 @@ def click(args:str):
         'cli': f'{lang.lang['bot.agentlog.click']}{args_temp}'
     }
 
+@method()
 def typewrite(args:str):
     autogui.typewrite(args)
     time.sleep(1)
@@ -178,6 +208,7 @@ def typewrite(args:str):
         'cli': f'{lang.lang['bot.agentlog.typewrite']}{args}'
     }
 
+@method()
 def skill(args=None):
     if args == None:
         return {'sys':skills.list(),
@@ -185,7 +216,8 @@ def skill(args=None):
     else:
         return {'sys':skills.load(args),
                 'cli':lang.lang['bot.agentlog.skillread']}
-    
+
+@method()
 def mcp(args:str=None):
     args=None if args == None else args.strip().split(maxsplit=2)
     if args == None or args[0] == 'list':
@@ -207,6 +239,7 @@ def mcp(args:str=None):
             return {'sys':result,
                     'cli':f'{lang.lang['cnmd.mcp.usetool']}{args[0]}→{args[1]}'}
 
+@method()
 def taskstart(args=None):
     subagent.startsubagent()
     return {'sys':'<tool_call>PAUSE</tool_call>',

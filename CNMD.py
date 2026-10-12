@@ -57,7 +57,7 @@ class CNMD():
         self.cmd_check = []
         self.mslock = True
         self.enable_log = self.config['enable_log']
-
+        self.status = 0
         self.help_text = lang.text['cnmd.helptext']
 
     def _similarity(self,str1, str2):
@@ -303,9 +303,11 @@ class CNMD():
                 json.dump(self.toolcall,f,indent=4,ensure_ascii=False)
 
     def CNMD(self,cmd):
+        self.status = 1
         if cmd[0] == '#':
             if '#execute' not in cmd and '#e' not in cmd:
                 self._user_command(cmd)
+                self.status = 0
                 return
             else:
                 if len(cmd.split()) == 1:
@@ -325,6 +327,7 @@ class CNMD():
         self.mstemp = copy.deepcopy(self.msg)
         while True and self.mslock:
             if '<tool_call>PAUSE</tool_call>' in cmd:
+                self.status = 0
                 return
             self.messages.append(multymodel.user(cmd))
             self.msg.append(self.tic)
@@ -421,6 +424,7 @@ class CNMD():
         if self.mslock == False:
             self.mslock = True
             self.msg_stack.append(lang.lang['cnmd.base.pause'])
+        self.status = 0
         return
 
 def stack_print(stack):
