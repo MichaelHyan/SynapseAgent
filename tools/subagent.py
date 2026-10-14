@@ -162,14 +162,14 @@ class SubAgent():
 
 def startsubagent():
     if sys.platform.startswith("win"):
-        cmd = 'start "" cmd /k "python SynapseAgent_SubAgent.py"'
+        cmd = 'start "" cmd /k "python ./subagent_runner.py"'
         subprocess.Popen(cmd, shell=True)
     elif sys.platform == "darwin":
         subprocess.Popen(["osascript", "-e",
-                          'tell application "Terminal" to do script "python SynapseAgent_SubAgent.py"'])
+                          'tell application "Terminal" to do script "python ./subagent_runner.py"'])
     else:
         args = ["gnome-terminal", "--", "bash", "-c",
-                "python SynapseAgent_SubAgent.py; exec bash"]
+                "python ./subagent_runner.py; exec bash"]
         subprocess.Popen(args)
 
 def stack_print(stack):
