@@ -439,18 +439,3 @@ class CNMD():
             self.msg_stack.append(lang.lang['cnmd.base.pause'])
         self.status = 0
         return
-
-def stack_print(stack):
-    while True:
-        if stack:
-            item = stack.pop(0)
-            print(item)
-        time.sleep(0.5)
-
-if __name__ == '__main__':
-    CNM = CNMD()
-    t = threading.Thread(target=stack_print,args=(CNM.msg_stack,),daemon=True)
-    t.start()
-    while True:
-        cmd = input('======================================\n')
-        CNM.CNMD(cmd)

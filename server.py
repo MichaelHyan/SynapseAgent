@@ -109,7 +109,7 @@ def ping():
 
 @method()
 def ask(content:str):
-    print(f'{Color.CYAN}[S]{Color.RESET}:{Color.CYAN}{timer.timer_json()['timestring']}{Color.RESET}-{Color.GREEN}ask{Color.RESET}:{content if len(content) < 10 else content[:10] + '...'}')
+    print(f'{Color.CYAN}[S]{Color.RESET}:{Color.CYAN}{timer.timer_json()['timestring']}{Color.RESET}-{Color.GREEN}ask{Color.RESET}:{content if len(content) < 50 else content[:50] + '...'}')
     threading.Thread(target=response, args=(content,)).start()
     return {
         "status": 1,
@@ -124,7 +124,7 @@ def answer(type='rp'):
             status = 1
             if cnm.msg_stack == [] and cnm.status == 0:
                 status = 0
-            print(f'{Color.CYAN}[S]{Color.RESET}:{Color.CYAN}{timer.timer_json()['timestring']}{Color.RESET}-{Color.BLUE}reply{Color.RESET}:{resp if len(resp) < 10 else resp[:10] + '...'}')
+            print(f'{Color.CYAN}[S]{Color.RESET}:{Color.CYAN}{timer.timer_json()['timestring']}{Color.RESET}-{Color.BLUE}reply{Color.RESET}:{resp if len(resp) < 50 else resp[:50] + '...'}')
             return {
                 "status": status,
                 "response": resp
