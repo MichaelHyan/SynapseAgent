@@ -1,12 +1,13 @@
-from tools import fileedit,memory
+from src.tools import fileedit
+from src.tools import memory
 from prompt_loader import prompt
-import tools.tool_handler as tool
-import tools.bot as bot
-import tools.lang as lang
-import tools.tag_parser as tag_parser
-import tools.multymodalhandler as multymodel
+import src.tools.tool_handler as tool
+import src.tools.bot as bot
+import src.tools.lang as lang
+import src.tools.tag_parser as tag_parser
+import src.tools.multymodalhandler as multymodel
 import copy,json,time,threading,os
-import tools.guide as guide
+import src.tools.guide as guide
 if not os.path.exists('./logs'):
     os.makedirs('./logs')
 if not os.path.exists('./bak'):

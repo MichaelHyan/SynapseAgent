@@ -1,7 +1,7 @@
-import tools.multymodalhandler as multymodel
-import tools.screenshot as screenshot
-import tools.bot as bot
-import tools.lang as lang
+import src.tools.multymodalhandler as multymodel
+import src.tools.screenshot as screenshot
+import src.tools.bot as bot
+import src.tools.lang as lang
 import pyautogui,json
 WIDTH,HIGHT= pyautogui.size()
 

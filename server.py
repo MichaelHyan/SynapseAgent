@@ -1,6 +1,7 @@
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
+import src.tools.timer as timer
 
 '''
 Invoke-RestMethod -Uri "http://127.0.0.1:56700/cnmd" `
@@ -69,9 +70,9 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
 #--------------------------------------------------------------------------------------------------
-import CNMD
+import src.main.CNMD as CNMD
 import argparse,threading,os
-from tools.color_utils import Color
+from src.tools.color_utils import Color
 
 parser = argparse.ArgumentParser()
 parser.add_argument('name', nargs='?', default='agent_base')
@@ -96,8 +97,11 @@ def print_banner():
 def response(post:str):
     cnm.CNMD(post)
 
+
+
 @method()
 def ping():
+    print(f'[S]:{timer.timer_json()['timestring']}-ping')
     return {
         "status": 0,
         "response": ""
@@ -105,6 +109,7 @@ def ping():
 
 @method()
 def ask(content:str):
+    print(f'[S]:{timer.timer_json()['timestring']}-ask:{content if len(content) < 100 else content[:100]}')
     threading.Thread(target=response, args=(content,)).start()
     return {
         "status": 1,
@@ -119,6 +124,7 @@ def answer(type='rp'):
             status = 1
             if cnm.msg_stack == [] and cnm.status == 0:
                 status = 0
+            print(f'[S]:{timer.timer_json()['timestring']}-reply:{resp if len(resp) < 100 else resp[:100]}')
             return {
                 "status": status,
                 "response": resp
@@ -129,6 +135,7 @@ def answer(type='rp'):
                 "response":""
             }
     elif type == 'rl':
+        print(f'[S]:{timer.timer_json()['timestring']}-reply read only')
         return {
             "status": cnm.status,
             "response": '\n'.join(str(x) for x in cnm.msg_stack)

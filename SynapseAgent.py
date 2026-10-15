@@ -1,8 +1,8 @@
-import tools.guide as guide
-import CNMD
+import src.tools.guide as guide
+import src.main.CNMD as CNMD
 import threading, time, copy, os, sys, argparse
-from tools import lang
-from tools.color_utils import Color
+from src.tools import lang
+from src.tools.color_utils import Color
 
 input_list = ''
 parser = argparse.ArgumentParser()

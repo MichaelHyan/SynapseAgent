@@ -1,4 +1,4 @@
-from tools.color_utils import Color
+from src.tools.color_utils import Color
 import time,os,json
 def main():
     print(f'{Color.RED}未检测到配置文件，已启动引导程序。\nNo configuration file detected, bootloader started.{Color.RESET}')

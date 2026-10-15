@@ -4,13 +4,13 @@ import json
 import re
 import time
 import threading
-import tools.lang as lang
+import src.tools.lang as lang
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 os.chdir(BASE_DIR)
 sys.path.insert(0, BASE_DIR)
 
-import tools.subagent as subagent
-from tools.color_utils import Color
+import src.main.subagent as subagent
+from src.tools.color_utils import Color
 
 print(f'{Color.CYAN}{Color.BRIGHT}')
 print(r"╭──────────────────────────────────────────╮")

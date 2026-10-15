@@ -1,5 +1,5 @@
 import os,base64,shutil
-import tools.lang as lang
+import src.tools.lang as lang
 import json,re
 with open('./config/config.json',encoding='utf-8') as f:
     config = json.load(f)

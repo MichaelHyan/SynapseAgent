@@ -4,7 +4,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from mcp.client.streamable_http import streamable_http_client
 import httpx
-import tools.lang as lang
+import src.tools.lang as lang
 
 USE_CN_MIRROR = True
 CN_NPM_REGISTRY = "https://registry.npmmirror.com"

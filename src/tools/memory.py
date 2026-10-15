@@ -1,7 +1,7 @@
 import json
-import tools.bot as bot
-import tools.wordvec as wordvec
-import tools.lang as lang
+import src.tools.bot as bot
+import src.tools.wordvec as wordvec
+import src.tools.lang as lang
 
 def mem_save(dict):
     with open('./database/mem.json','r', encoding='utf-8') as f:

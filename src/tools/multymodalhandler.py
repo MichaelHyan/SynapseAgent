@@ -1,5 +1,5 @@
-from tools import lang
-from tools import tag_parser
+from src.tools import lang
+from src.tools import tag_parser
 
 def user(cmd:str):
     parsed = tag_parser.parse_all(cmd)

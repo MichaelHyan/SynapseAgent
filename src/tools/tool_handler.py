@@ -1,4 +1,6 @@
-from tools import fileedit,runcmd, subagent, webgrab,timer,memory,skills,lang,mcp_call,screenshot,autogui
+from src.main import subagent
+from src.tools import autogui, fileedit, lang, mcp_call, memory, runcmd, screenshot, skills, timer
+from src.tools import webgrab
 import json,threading,time
 
 _REGISTRY = {}
