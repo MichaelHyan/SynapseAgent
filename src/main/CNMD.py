@@ -93,34 +93,36 @@ class CNMD():
             result.append(f"{start}-{nums[-1]}")
         return ",".join(result)
     
-    def _user_command(self,cmd):
+    def _user_command(self,cmd:str):
+        cmd = cmd.strip()
         ori_cmd = copy.deepcopy(cmd)
-        cmd = cmd.split()
+        cmd = cmd.split(maxsplit=1)
         if cmd[0] == '#node':
-            if cmd[1] == 'save':
-                self.nodelist[cmd[2]] = copy.deepcopy(self.msg)
-                self.msg_stack.append(f'{lang.lang['cnmd.node.savecomplete']}{cmd[2]}')
+            cmd[1] = cmd[1].split(maxsplit=1)
+            if cmd[1][0] == 'save':
+                self.nodelist[cmd[1][1]] = copy.deepcopy(self.msg)
+                self.msg_stack.append(f'{lang.lang['cnmd.node.savecomplete']}{cmd[1][1]}')
                 return
-            if cmd[1] == 'delete':
-                tlist = {k: v for k, v in self.nodelist.items() if k != cmd[2]}
+            if cmd[1][0] == 'delete':
+                tlist = {k: v for k, v in self.nodelist.items() if k != cmd[1][1]}
                 if self.nodelist == tlist:
                     self.msg_stack.append(f'{lang.lang['cnmd.node.delunsuccess']}')
                     return
                 else:
                     self.nodelist = copy.deepcopy(tlist)
-                    self.msg_stack.append(f'{lang.lang['cnmd.node.delcomplete']}{cmd[2]}')
+                    self.msg_stack.append(f'{lang.lang['cnmd.node.delcomplete']}{cmd[1][1]}')
                     return
-            elif cmd[1] == 'load':
+            elif cmd[1][0] == 'load':
                 temp = self.nodelist.get(cmd[2])
                 if temp:
-                    self.msg = copy.deepcopy(self.nodelist.get(cmd[2]))
-                    self.msg_stack.append(f'{lang.lang['cnmd.node.loadcomplete']}{cmd[2]}')
+                    self.msg = copy.deepcopy(self.nodelist.get(cmd[1][1]))
+                    self.msg_stack.append(f'{lang.lang['cnmd.node.loadcomplete']}{cmd[1][1]}')
                     return
                 else:
                     self.msg_stack.append(f'{lang.lang['cnmd.node.nodenotfound']}')
                     return
-            elif cmd[1] == 'savef':
-                temp = cmd[2]
+            elif cmd[1][0] == 'savef':
+                temp = cmd[1][1]
                 if temp:
                     try:
                         with open(f'./logs/{temp}.json','w',encoding='utf-8') as f:
@@ -137,8 +139,8 @@ class CNMD():
                 else:
                     self.msg_stack.append(lang.lang['cnmd.log.filenotfound'])
                     return
-            elif cmd[1] == 'loadf':
-                temp = cmd[2]
+            elif cmd[1][0] == 'loadf':
+                temp = cmd[1][1]
                 if temp:
                     try:
                         with open(f'./logs/{temp}.json','r',encoding='utf-8') as f:
@@ -155,25 +157,25 @@ class CNMD():
                 else:
                     self.msg_stack.append(lang.lang['cnmd.log.filenotfound'])
                     return
-            elif cmd[1] == 'list':
+            elif cmd[1][0] == 'list':
                 temp = f'{lang.lang['cnmd.node.nodelist']}\n'
                 for key,value in self.nodelist.items():
                     temp += f'{key} [{self._compress_number(value)}]\n'
                 self.msg_stack.append(temp.strip())
                 return
-            elif cmd[1] == 'backward':
+            elif cmd[1][0] == 'backward':
                 if len(self.msg) == 1:
                     self.msg_stack.append(lang.lang['cnmd.node.backwardunable'])
                 self.nodelist['temp'] = copy.deepcopy(self.msg)
                 try:
-                    self.msg = self.msg[:-2*int(cmd[2])]
-                    self.msg_stack.append(f'{lang.lang['cnmd.node.backwardcount']}{cmd[2]}')
+                    self.msg = self.msg[:-2*int(cmd[1][1])]
+                    self.msg_stack.append(f'{lang.lang['cnmd.node.backwardcount']}{cmd[1][1]}')
                     return
                 except:
                     self.msg = self.msg[:-2]
                     self.msg_stack.append(lang.lang['cnmd.node.backward'])
                     return
-            elif cmd[1] == 'backwardms':
+            elif cmd[1][0] == 'backwardms':
                 self.msg = copy.deepcopy(self.mstemp)
                 self.msg_stack.append(lang.lang['cnmd.node.backward'])
                 return
@@ -184,25 +186,26 @@ class CNMD():
             self.msg_stack.append(self.help_text)
             return
         elif cmd[0] == '#bot':
-            if cmd[1] == 'reasoning':
-                if cmd[2] == 'on' or cmd[2] == 'true' or cmd[2] == 'True' or cmd[2] == '1':
+            cmd[1] = cmd[1].split(maxsplit=1)
+            if cmd[1][0] == 'reasoning':
+                if cmd[1][1] == 'on' or cmd[1][1] == 'true' or cmd[1][1] == 'True' or cmd[1][1] == '1':
                     self.allow_reasoning = True
                     self.msg_stack.append(lang.lang['cnmd.bot.reasoningon'])
                     return
-                elif cmd[2] == 'off' or cmd[2] == 'false' or cmd[2] == 'False' or cmd[2] == '0':
+                elif cmd[1][1] == 'off' or cmd[2][1] == 'false' or cmd[1][1] == 'False' or cmd[1][1] == '0':
                     self.allow_reasoning = False
                     self.msg_stack.append(lang.lang['cnmd.bot.reasoningoff'])
                     return
                 else:
                     self._correction(ori_cmd)
                     return
-            elif cmd[1] == 'prompt':
-                self.set_prompt(cmd[2])
+            elif cmd[1][0] == 'prompt':
+                self.set_prompt(cmd[1][1])
                 return
-            elif cmd[1] == 'reset':
+            elif cmd[1][0] == 'reset':
                 self._reset()
                 return
-            elif cmd[1] == 'reload':
+            elif cmd[1][0] == 'reload':
                 bot.reload()
                 self.msg_stack.append(lang.lang['cnmd.bot.reload'])
                 return
@@ -266,7 +269,7 @@ class CNMD():
         p = p.strip()
         if p[:15] == 'PROMPTOVERWRITE':
             self.prompt_init = p
-            self.prompt = p[15:]
+            self.prompt = p[15:].strip()
             pass
         else:
             self.prompt_init = p
