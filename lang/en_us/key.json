@@ -4,6 +4,7 @@
     "cnmd.base.error":"[D] exception error: ",
     "cnmd.base.pause":"[D] reply paused",
     "cnmd.base.cmd":"[D] Agent wants to execute following commands.\nEnter '#execute' or '#e' to run.\n",
+    "cnmd.base.skipable":"[D] skipable commands:",
     "cnmd.node.savecomplete":"[U] node save complete: ",
     "cnmd.node.loadcomplete":"[U] node load complete: ",
     "cnmd.node.delcomplete":"[U] node delete complete: ",

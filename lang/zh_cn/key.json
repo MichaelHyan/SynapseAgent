@@ -4,6 +4,7 @@
     "cnmd.base.error":"[D] 遇到错误: ",
     "cnmd.base.pause":"[D] 回复停止",
     "cnmd.base.cmd":"[D] Agent想要执行这些指令\n输入'#execute'或'#e'来批准运行\n",
+    "cnmd.base.skipable":"[D] 忽略指令设定:",
     "cnmd.node.savecomplete":"[U] 节点已保存: ",
     "cnmd.node.loadcomplete":"[U] 节点已加载: ",
     "cnmd.node.delcomplete":"[U] 节点已删除: ",

@@ -243,6 +243,9 @@ class CNMD():
         elif cmd[0] == '#dream':
             memory.analyse()
             self.msg_stack.append(lang.lang['cnmd.mem.analyse'])
+        elif cmd[0] == '#skipable':
+            tool.SKIP_CALL = cmd[1].split()
+            self.msg_stack.append(f'{lang.lang['cnmd.base.skipable']}{cmd[1]}')
         else:
             self._correction(ori_cmd)
     

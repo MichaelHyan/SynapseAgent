@@ -1,11 +1,13 @@
 from src.main import subagent
 from src.tools import autogui, fileedit, lang, mcp_call, memory, runcmd, screenshot, skills, timer
 from src.tools import webgrab
-import json,threading,time
+import json,threading,time,copy
 
 _REGISTRY = {}
+SKIP_CALL = []
 
 def tool(function:str):
+    ori_function = copy.deepcopy(function)
     function = function.replace('<tool_call>','').replace('</tool_call>','')
     if function[0] == '\n':
         function = function[1:]
@@ -15,6 +17,10 @@ def tool(function:str):
         function,args = function.strip().split(maxsplit=1)
     except:
         args = None
+    if function in SKIP_CALL:
+        print(ori_function)
+        return {'sys':'<tool_call>PAUSE</tool_call>',
+            'cli':f'<tool_call>ori_function</tool_call>'}
     func = _REGISTRY.get(function)
     if func:
         result = func(args)
