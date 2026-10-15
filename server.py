@@ -85,7 +85,7 @@ def print_banner():
     print(f'{Color.CYAN}{Color.BRIGHT}')
     print(f"{' ' * int((os.get_terminal_size().columns/2-23))}" + r"╭──────────────────────────────────────────╮")
     print(f"{' ' * int((os.get_terminal_size().columns/2-23))}" + r"│     //  \\                               |")
-    print(f"{' ' * int((os.get_terminal_size().columns/2-23))}" + r"│     \\  //           SynapseAgent        |")
+    print(f"{' ' * int((os.get_terminal_size().columns/2-23))}" + r"│     \\  //       SynapseAgent Server     |")
     print(f"{' ' * int((os.get_terminal_size().columns/2-23))}" + r"│       ||         ────────────────────    |")
     print(f"{' ' * int((os.get_terminal_size().columns/2-23))}" + r"│    //    \\         Think Backward       |")
     print(f"{' ' * int((os.get_terminal_size().columns/2-23))}" + r"│ //  \\  //  \\       And Re:Start!       |")
