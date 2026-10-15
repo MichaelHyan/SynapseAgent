@@ -262,9 +262,15 @@ class CNMD():
         self.tic = 1
         self.msg_stack.append(lang.lang['cnmd.bot.reset'])
 
-    def set_prompt(self,p):
-        self.prompt_init = p
-        self.prompt = prompt.load(self.prompt_init)
+    def set_prompt(self,p:str):
+        p = p.strip()
+        if p[:15] == 'PROMPTOVERWRITE':
+            self.prompt_init = p
+            self.prompt = p[15:]
+            pass
+        else:
+            self.prompt_init = p
+            self.prompt = prompt.load(self.prompt_init)
         self.TIME_STAMP = round(time.time())
         self.nodelist = {}
         self.nodelist['init'] = [0]
