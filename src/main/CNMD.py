@@ -253,6 +253,7 @@ class CNMD():
         bot.reload()
         with open('./config/config.json',encoding='utf-8') as f:
             self.config = json.load(f)
+        self.cmd_check = []
         self.TIME_STAMP = round(time.time())
         self.prompt = prompt.load(self.prompt_init)
         self.nodelist['init'] = [0]
@@ -277,6 +278,7 @@ class CNMD():
         else:
             self.prompt_init = p
             self.prompt = prompt.load(self.prompt_init)
+        self.cmd_check = []
         self.TIME_STAMP = round(time.time())
         self.nodelist = {}
         self.nodelist['init'] = [0]
@@ -289,22 +291,6 @@ class CNMD():
         self.msg = self.nodelist['init']
         self.tic = 1
         self.msg_stack.append(lang.lang['cnmd.bot.setprompt'])
-
-    def _mission_init(self):
-        self.prompt = prompt.load('msm')
-        self.TIME_STAMP = round(time.time())
-        self.nodelist = {}
-        self.nodelist['init'] = [0]
-        self.messages = [
-            {
-                "role":"system",
-                "content":self.prompt
-            }
-        ]
-        self.toolcall = [['none']]
-        self.msg = self.nodelist['init']
-        self.tic = 1
-        self.msg_stack.append(lang.lang['bot.agentlog.submission'])
 
     def log(self):
         if self.enable_log:
@@ -351,6 +337,7 @@ class CNMD():
             response = bot.reply(post)
             #c = input()
             #response = {"content":c,"reasoning_content":"bruh!"}
+            #response = {"content":'bruh<tool_call>timeread</tool_call>',"reasoning_content":"bruh!"}
             if response:
                 content = response.get('content')
                 reasoning_content = response.get('reasoning_content')

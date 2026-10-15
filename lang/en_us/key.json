@@ -60,7 +60,6 @@
     "bot.agentlog.powershell":"[D] running: ",
     "bot.agentlog.skilllist":"[D] checking skill list",
     "bot.agentlog.skillread":"[D] learning skill",
-    "bot.agentlog.submission":"[D] submission start",
     "bot.tool.memory":"[A] search result: ",
     "bot.tool.memorynone":"[A] nothing found",
     "bot.tool.setheader":"[A] web header set: ",

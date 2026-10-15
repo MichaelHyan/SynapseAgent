@@ -18,9 +18,8 @@ def tool(function:str):
     except:
         args = None
     if function in SKIP_CALL:
-        print(ori_function)
         return {'sys':'<tool_call>PAUSE</tool_call>',
-            'cli':f'<tool_call>ori_function</tool_call>'}
+            'cli':f'<tool_call>{ori_function}</tool_call>'}
     func = _REGISTRY.get(function)
     if func:
         result = func(args)

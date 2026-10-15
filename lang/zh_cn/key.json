@@ -60,7 +60,6 @@
     "bot.agentlog.powershell":"[D] 运行powershell命令: ",
     "bot.agentlog.skilllist":"[D] 查看技能列表",
     "bot.agentlog.skillread":"[D] 读取技能",
-    "bot.agentlog.submission":"[D] 开始任务",
     "bot.tool.memory":"[A] 搜索结果: ",
     "bot.tool.memorynone":"[A] 未找到相关信息",
     "bot.tool.setheader":"[A] 设置网站header: ",
