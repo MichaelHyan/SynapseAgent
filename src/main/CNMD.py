@@ -424,5 +424,6 @@ class CNMD():
         if self.mslock == False:
             self.mslock = True
             self.msg_stack.append(lang.lang['cnmd.base.pause'])
+        self.cmd_check = []
         self.status = 0
         return
