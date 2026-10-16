@@ -113,7 +113,7 @@ class CNMD():
                     self.msg_stack.append(f'{lang.lang['cnmd.node.delcomplete']}{cmd[1][1]}')
                     return
             elif cmd[1][0] == 'load':
-                temp = self.nodelist.get(cmd[2])
+                temp = self.nodelist.get(cmd[1][1])
                 if temp:
                     self.msg = copy.deepcopy(self.nodelist.get(cmd[1][1]))
                     self.msg_stack.append(f'{lang.lang['cnmd.node.loadcomplete']}{cmd[1][1]}')
@@ -192,7 +192,7 @@ class CNMD():
                     self.allow_reasoning = True
                     self.msg_stack.append(lang.lang['cnmd.bot.reasoningon'])
                     return
-                elif cmd[1][1] == 'off' or cmd[2][1] == 'false' or cmd[1][1] == 'False' or cmd[1][1] == '0':
+                elif cmd[1][1] == 'off' or cmd[1][1] == 'false' or cmd[1][1] == 'False' or cmd[1][1] == '0':
                     self.allow_reasoning = False
                     self.msg_stack.append(lang.lang['cnmd.bot.reasoningoff'])
                     return
