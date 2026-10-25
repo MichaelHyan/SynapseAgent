@@ -6,3 +6,4 @@ test.py
 /database
 /config/config_mcp.json
 config/config_mcp.json
+clear_pycache.py

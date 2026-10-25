@@ -325,7 +325,7 @@ class CNMD():
 
         self.mstemp = copy.deepcopy(self.msg)
         while True and self.mslock:
-            if '<tool_call>PAUSE</tool_call>' in cmd:
+            if '<toolcall>PAUSE</toolcall>'.replace('toolcall','tool_call') in cmd:
                 self.status = 0
                 return
             self.messages.append(multymodel.user(cmd))
@@ -347,7 +347,7 @@ class CNMD():
                 content = lang.lang['cnmd.bot.responsefail']
                 reasoning_content = lang.lang['cnmd.bot.responsefail']
             calls,text = tag_parser.parse(content)
-            if calls == [] and '<tool_call>' not in content:
+            if calls == [] and '<toolcall>'.replace('toolcall','tool_call') not in content:
                 if text == '':
                     self.msg_stack.append(lang.lang['cnmd.bot.responsefailcontinue'])
                 else:
@@ -363,7 +363,7 @@ class CNMD():
                 self.toolcall.append(['none'])
                 self.log()
                 break
-            elif calls == [] and '<tool_call>' in content:
+            elif calls == [] and '<toolcall>'.replace('toolcall','tool_call') in content:
                 if text == '':
                     self.msg_stack.append(lang.lang['cnmd.bot.responsefailcontinue'])
                 else:

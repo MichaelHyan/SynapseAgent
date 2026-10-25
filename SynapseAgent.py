@@ -11,7 +11,6 @@ args = parser.parse_args()
 
 cnm = CNMD.CNMD(args.name)
 
-is_reasoning = False
 BAR = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
 
 def print_banner():
@@ -29,7 +28,7 @@ def print_banner():
     print(f'{Color.WHITE}{"─" * (os.get_terminal_size().columns-1)}{Color.RESET}')
 
 def input_thread():
-    global input_list, cnm, is_reasoning
+    global input_list, cnm
     while True:
         try:
             user_input = input()
@@ -37,7 +36,6 @@ def input_thread():
             if user_input == '' and input_list != '':
                 threading.Thread(target=agent_thread).start()
                 print(f'{Color.WHITE}{"─" * (os.get_terminal_size().columns-1)}{Color.RESET}')
-                is_reasoning = True
             elif user_input == '#pause' or user_input == '#p':
                 print(f'{Color.RED}{lang.lang['cnmd.base.pause']}{Color.RESET}')
                 cnm.mslock = False
@@ -59,10 +57,8 @@ def agent_thread():
     cnm.CNMD(temp)
 
 def process_thread():
-    global is_reasoning
     while True:
         if cnm.msg_stack:
-            is_reasoning = False
             sys.stdout.write(f'\r{" " * 20}\r')
             sys.stdout.flush()
             first_element = cnm.msg_stack.pop(0)
@@ -78,20 +74,20 @@ def process_thread():
         time.sleep(0.1)
 
 def reasoning_thread():
-    global is_reasoning
     i = 0
-    prev_is_reasoning = False
+    prev_running = False
     
     while True:
-        if is_reasoning:
+        running = (getattr(cnm, 'status', 0) == 1)
+        if running:
             sys.stdout.write(f'\r{Color.GREEN}{BAR[i % len(BAR)]}{Color.RESET} {lang.lang['cnmd.bot.reasoning']}')
             sys.stdout.flush()
             i += 1
-            prev_is_reasoning = True
-        elif prev_is_reasoning:
+            prev_running = True
+        elif prev_running:
             sys.stdout.write(f'\r{" " * 30}\r')
             sys.stdout.flush()
-            prev_is_reasoning = False
+            prev_running = False
         
         time.sleep(0.15)
 
