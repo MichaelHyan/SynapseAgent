@@ -51,6 +51,9 @@ def read(path:str):
 
 def write(path, content):
     try:
+        parent_dir = os.path.dirname(path)
+        if parent_dir and not os.path.exists(parent_dir):
+            os.makedirs(parent_dir)
         with open(path, 'w', encoding = 'utf-8') as f:
             f.write(content)
         return lang.lang['bot.tool.filewritedone']
