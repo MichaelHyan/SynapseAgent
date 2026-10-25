@@ -10,6 +10,10 @@ CNMD类位于./src/main/CNMD.py中。
 
 输出结果将写入到变量msg_stack，通过逐次读取来获取输出。
 
+注意：
+- CNMD对象的回答循环有急停设置，将mslock属性设为False则在当轮拦截并退出循环。
+- CNMD对象拥有回答状态，status属性为1时表示未结束回答循环，结束后归零。
+
 ### http调用
 
 启动server.py后将自动实例化一个CNMD对象，同时开放127.0.0.1:56700/cnmd，可发送http post获取输出。
@@ -90,6 +94,19 @@ Invoke-RestMethod -Uri "http://127.0.0.1:56700/cnmd" `
 Synapse Agent使用指令区调用，指令区格式<tool_call>指令</tool_call>。
 
 启动前发送指令#skipable 指令名1 指令名2 ...以指定忽略表。如有需要也可以用于屏蔽某些原生工具。
+
+### 多模态传递
+
+使用base64编码多模态媒体文件或者url后，使用标签包裹并与文本一起发送。
+
+```bash
+<image>编码后的图片字符</image>
+<imageurl>图片url</imageurl>
+<audio>编码后的音频字符</audio>
+<audiourl>音频url</audiourl>
+<video>编码后的视频字符</video>
+<videourl>视频url</videourl>
+```
 
 ### 提示词覆写
 
