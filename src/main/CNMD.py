@@ -150,6 +150,7 @@ class CNMD():
                         with open(f'./logs/{temp}_tool.json','r',encoding='utf-8') as f:
                             self.toolcall = json.load(f)
                         self.msg_stack.append(lang.lang['cnmd.log.loadcomplete'])
+                        self.msg_stack.append(self._gen_context())
                         return
                     except Exception as e:
                         self.msg_stack.append(lang.lang['cnmd.log.filenotfound'])
@@ -292,6 +293,56 @@ class CNMD():
         self.tic = 1
         self.msg_stack.append(lang.lang['cnmd.bot.setprompt'])
 
+    def _content_to_text(self, content, multimodal_filter=False):
+        if content is None:
+            return ''
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            text = ''
+            for i in content:
+                if isinstance(i, dict):
+                    if i.get('type') == 'text':
+                        text += i.get('text', '')
+                    elif not multimodal_filter:
+                        text += f"[{i.get('type')}]"
+                else:
+                    text += str(i)
+            return text
+        return str(content)
+
+    def _gen_context(self, limit=10):
+        turns = []
+        user_text = None
+        agent_text = []
+        for i in self.messages[1:]:
+            if not isinstance(i, dict):
+                continue
+            role = i.get('role')
+            if role == 'user':
+                text = self._content_to_text(i.get('content'), multimodal_filter=True)
+                if text.lstrip().startswith('[A]tool call feedback'):
+                    continue
+                if user_text is not None:
+                    turns.append((user_text, '\n'.join(agent_text).strip()))
+                user_text = text
+                agent_text = []
+            elif role == 'system':
+                text = self._content_to_text(i.get('content'))
+                plain = tag_parser.parse(text)[1].strip()
+                if plain != '':
+                    agent_text.append(plain)
+        if user_text is not None:
+            turns.append((user_text, '\n'.join(agent_text).strip()))
+        prefix = ''
+        if len(turns) > limit:
+            turns = turns[-limit:]
+            prefix = '...\n'
+        out = prefix
+        for user, agent in turns:
+            out += f'> User:\n{user}\n\n> Agent:\n{agent}\n\n'
+        return out.strip()
+
     def log(self):
         if self.enable_log:
             with open(f'./logs/{self.TIME_STAMP}.json','w',encoding='utf-8') as f:
@@ -337,7 +388,6 @@ class CNMD():
             response = bot.reply(post)
             #c = input()
             #response = {"content":c,"reasoning_content":"bruh!"}
-            #response = {"content":'bruh<tool_call>timeread</tool_call>',"reasoning_content":"bruh!"}
             if response:
                 content = response.get('content')
                 reasoning_content = response.get('reasoning_content')
