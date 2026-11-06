@@ -2,6 +2,7 @@ from src.main import subagent
 from src.tools import autogui, fileedit, lang, mcp_call, memory, runcmd, screenshot, skills, timer
 from src.tools import webgrab
 import json,threading,time,copy
+import urllib.parse
 
 _REGISTRY = {}
 SKIP_CALL = []
@@ -18,7 +19,7 @@ def tool(function:str):
     except:
         args = None
     if function in SKIP_CALL:
-        return {'sys':'<tool_call>PAUSE</tool_call>',
+        return {'sys':'<tool_call>{''}PAUSE{''}</tool_call>',
             'cli':f'<tool_call>{ori_function}</tool_call>'}
     func = _REGISTRY.get(function)
     if func:
@@ -111,24 +112,46 @@ def timeread(args=None):
 
 @method()
 def web(args:str):
-    if len(args.split(maxsplit=1)) == 1:
-        sys = webgrab.get_html(args)
+    def _normalize_url(url:str) -> str:
+        if not isinstance(url, str):
+            return url
+        url = url.strip().strip('\r\n\t')
+        for _ch in ('\u200b', '\u200c', '\u200d', '\ufeff'):
+            url = url.replace(_ch, '')
+        url = url.replace('\u3000', ' ')
+        parts = urllib.parse.urlsplit(url)
+        if not parts.scheme or not parts.netloc:
+            return url
+        query = parts.query.replace('+', ' ')
+        return urllib.parse.urlunsplit(
+            (parts.scheme, parts.netloc, parts.path, query, parts.fragment))
+    args = args.strip()
+    if args.startswith(('http://', 'https://')):
+        url = _normalize_url(args)
+        sys = webgrab.get_html(url)
         return {'sys':sys,
-                'cli':f'{lang.lang['bot.agentlog.webgrab']}{args}'}
-    else:
-        exc,content = args.split(maxsplit=1)
-        if exc == 'grab':
-            sys = webgrab.get_html(content)
-            return {'sys':sys,
-                    'cli':f'{lang.lang['bot.agentlog.webgrab']}{content}'}
-        elif exc == 'ping':
-            sys = webgrab.ping(content)
-            return {'sys':sys,
-                    'cli':f'{lang.lang['bot.agentlog.ping']}{content}'}
-        elif exc == 'setheader':
-            json.loads(content)
-            return {'sys':f'{lang.lang['bot.tool.setheader']}{content}',
-                    'cli':f'{lang.lang['bot.agentlog.setheader']}{content}'}
+                'cli':f'{lang.lang['bot.agentlog.webgrab']}{url}'}
+    parts = args.split(maxsplit=1)
+    if len(parts) == 1:
+        url = _normalize_url(parts[0])
+        sys = webgrab.get_html(url)
+        return {'sys':sys,
+                'cli':f'{lang.lang['bot.agentlog.webgrab']}{url}'}
+    exc, content = parts
+    if exc == 'grab':
+        url = _normalize_url(content.strip())
+        sys = webgrab.get_html(url)
+        return {'sys':sys,
+                'cli':f'{lang.lang['bot.agentlog.webgrab']}{url}'}
+    elif exc == 'ping':
+        content = content.strip()
+        sys = webgrab.ping(content)
+        return {'sys':sys,
+                'cli':f'{lang.lang['bot.agentlog.ping']}{content}'}
+    elif exc == 'setheader':
+        json.loads(content)
+        return {'sys':f'{lang.lang['bot.tool.setheader']}{content}',
+                'cli':f'{lang.lang['bot.agentlog.setheader']}{content}'}
 
 @method()
 def mem(args:str):
@@ -144,33 +167,33 @@ def mem(args:str):
 @method()
 def image_read(path:str):
     if 'http' in path:
-        sys = f'<imageurl>{path}</imageurl>'
+        sys = f'<agent_imageurl>{path}</agent_imageurl>'
     else:
-        sys = fileedit.encode(path,'image')
+        sys = fileedit.encode(path,'agent_image')
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.imread']}{path}'}
 
 @method()
 def audio_read(path:str):
     if 'http' in path:
-        sys = f'<audiourl>{path}</audiourl>'
+        sys = f'<agent_audiourl>{path}</agent_audiourl>'
     else:
-        sys = fileedit.encode(path,'audio')
+        sys = fileedit.encode(path,'agent_audio')
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.auread']}{path}'}
 
 @method()
 def video_read(path:str):
     if 'http' in path:
-        sys = f'<videourl>{path}</videourl>'
+        sys = f'<agent_videourl>{path}</agent_videourl>'
     else:
-        sys = fileedit.encode(path,'video')
+        sys = fileedit.encode(path,'agent_video')
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.viread']}{path}'}
 
 @method()
 def screen(args=None):
-    sys = screenshot.capture_all_base64(prefix='image')
+    sys = screenshot.capture_all_base64(prefix='agent_image')
     return {'sys':sys,
             'cli':f'{lang.lang['bot.agentlog.screenshot']}'}
 
@@ -181,7 +204,7 @@ def screen_cord(args=None):
     else:
         cord = screenshot.get_screen_cord(eval(args))
     return {
-        "sys": f'{cord['cord']}<image>{cord['image']}</image>',
+        "sys": f'{cord['cord']}<agent_image>{cord['image']}</agent_image>',
         'cli': f'{lang.lang['bot.agentlog.screenshot']}'
     }
 
@@ -201,7 +224,7 @@ def click(args:str):
     time.sleep(1)
     cord = screenshot.get_screen_cord()
     return {
-        "sys": f'{cord['cord']}<image>{cord['image']}</image>',
+        "sys": f'{cord['cord']}<agent_image>{cord['image']}</agent_image>',
         'cli': f'{lang.lang['bot.agentlog.click']}{args_temp}'
     }
 
@@ -211,7 +234,7 @@ def typewrite(args:str):
     time.sleep(1)
     cord = screenshot.get_screen_cord()
     return {
-        "sys": f'{cord['cord']}<image>{cord['image']}</image>',
+        "sys": f'{cord['cord']}<agent_image>{cord['image']}</agent_image>',
         'cli': f'{lang.lang['bot.agentlog.typewrite']}{args}'
     }
 
@@ -249,5 +272,5 @@ def mcp(args:str=None):
 @method()
 def taskstart(args=None):
     subagent.startsubagent()
-    return {'sys':'<tool_call>PAUSE</tool_call>',
+    return {'sys':f'<tool_call>{''}PAUSE{''}</tool_call>',
             'cli':f'{lang.lang['cnmd.subagent.start']}'}

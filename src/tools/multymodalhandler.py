@@ -11,35 +11,35 @@ def user(cmd:str):
     else:
         content = []
         for i in parsed['matches']:
-            if i['tag'] == 'image':
+            if i['tag'] == 'agent_image':
                 content.append({
                             "type": "image_url",
                             "image_url": {
                                 "url": f"data:image/jpeg;base64,{i['data']}"
                             }
                         })
-            elif i['tag'] == 'imageurl':
+            elif i['tag'] == 'agent_imageurl':
                 content.append({
                             "type": "image_url",
                             "image_url": {
                                 "url": i['data']
                             }
                         })
-            elif i['tag'] == 'audio':
+            elif i['tag'] == 'agent_audio':
                 content.append({
                             "type": "input_audio",
                             "input_audio": {
                                 "data": f"data:audio/wav;base64,{i['data']}"
                             }
                         })
-            elif i['tag'] == 'audiourl':
+            elif i['tag'] == 'agent_audiourl':
                 content.append({
                             "type": "input_audio",
                             "input_audio": {
                                 "data": i['data']
                             }
                         })
-            elif i['tag'] == 'video':
+            elif i['tag'] == 'agent_video':
                 content.append({
                             "type": "video_url",
                             "video_url": {
@@ -48,7 +48,7 @@ def user(cmd:str):
                             "fps": 2,
                             "media_resolution": "default"
                         })
-            elif i['tag'] == 'videourl':
+            elif i['tag'] == 'agent_videourl':
                 content.append({
                             "type": "video_url",
                             "video_url": {
