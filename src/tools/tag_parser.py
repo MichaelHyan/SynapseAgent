@@ -9,7 +9,7 @@ def parse(text):
     #plain_text = re.sub(r'\s+', ' ', plain_text).strip()
     return tag_contents, plain_text
 
-TAGS = ["imageurl", "image", "audiourl", "audio", "videourl", "video"]
+TAGS = ["agent_imageurl", "agent_image", "agent_audiourl", "agent_audio", "agent_videourl", "agent_video"]
 TAG_ALTERNATION = "|".join(TAGS)
 PATTERN = re.compile(
     r"<(?P<tag>" + TAG_ALTERNATION + r")>(?P<data>.*?)</(?P=tag)>",
