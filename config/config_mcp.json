@@ -7,7 +7,7 @@
     "bocha-mcp": {
       "url": "https://mcp.bochaai.com/mcp",
       "headers": {
-        "Authorization": "Bearer sk-7060a94e0a754f019da61ad0107820db"
+        "Authorization": "Bearer sk-xxxx"
       }
     }
 }
