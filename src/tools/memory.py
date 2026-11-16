@@ -31,7 +31,7 @@ def mem_load(target:str):
     return result
 
 def compress(x):
-    content=lang.lang['prompt.compress_memory']
+    content=lang.text['prompt.compress']
     x.append({
         "role":"user",
         "content": content

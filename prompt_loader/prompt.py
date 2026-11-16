@@ -7,6 +7,8 @@ with open('./prompt_loader/config.json',encoding='utf-8') as f:
     config = json.load(f)
 
 def load(prp:str):
+    if prp[:15] == 'PROMPTOVERWRITE':
+            return prp[15:].strip()
     prompt = ''
     try:
         p = config[prp]

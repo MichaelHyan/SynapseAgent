@@ -1,9 +1,9 @@
 search_string.py
 test.py
-/config
 /logs
 /bak
 /database
 /config/config_mcp.json
-config/config_mcp.json
+/config/config.json
+/config/config1.json
 clear_pycache.py

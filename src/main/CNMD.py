@@ -37,6 +37,8 @@ class CNMD():
     def __init__(self,prompt_init = 'agent_base'):
         with open('./config/config.json',encoding='utf-8') as f:
             self.config = json.load(f)
+        with open('./config/config.json',encoding='utf-8') as f:
+            self.intercept = json.load(f)
         self.TIME_STAMP = round(time.time())
         self.stage_break = self.config['break']
         self.prompt_init = prompt_init
@@ -271,14 +273,8 @@ class CNMD():
         self.msg_stack.append(lang.lang['cnmd.bot.reset'])
 
     def set_prompt(self,p:str):
-        p = p.strip()
-        if p[:15] == 'PROMPTOVERWRITE':
-            self.prompt_init = p
-            self.prompt = p[15:].strip()
-            pass
-        else:
-            self.prompt_init = p
-            self.prompt = prompt.load(self.prompt_init)
+        self.prompt_init = p
+        self.prompt = prompt.load(self.prompt_init)
         self.cmd_check = []
         self.TIME_STAMP = round(time.time())
         self.nodelist = {}
@@ -342,6 +338,12 @@ class CNMD():
         for user, agent in turns:
             out += f'> User:\n{user}\n\n> Agent:\n{agent}\n\n'
         return out.strip()
+
+    def _intercept_check(self,text):
+        for i in self.intercept:
+            if i in text:
+                return True
+        return False
 
     def log(self):
         if self.enable_log:
@@ -414,6 +416,22 @@ class CNMD():
                 self.log()
                 break
             elif calls == [] and '<toolcall>'.replace('toolcall','tool_call') in content:
+                if text == '':
+                    self.msg_stack.append(lang.lang['cnmd.bot.responsefailcontinue'])
+                else:
+                    self.msg_stack.append(text)
+                self.messages.append(
+                    {
+                        "role": "system",
+                        "content": content
+                    }
+                )
+                self.msg.append(self.tic)
+                self.tic += 1
+                self.toolcall.append(['none'])
+                self.log()
+                cmd = lang.lang['cnmd.bot.callfail']
+            elif calls == [] and self._intercept_check(content):
                 if text == '':
                     self.msg_stack.append(lang.lang['cnmd.bot.responsefailcontinue'])
                 else:
