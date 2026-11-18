@@ -32,6 +32,7 @@
     "cnmd.mem.search": "[U] searching memory",
     "cnmd.mem.compress": "[U] context compressed",
     "cnmd.bot.toolfail": "[U] Agent tool call failed: ",
+    "cnmd.bot.toolunknown": "[U] Agent toolcall intercept",
     "cnmd.bot.callfail": "[U] Command format incorrect. Clease check your command.",
     "cnmd.subagent.start": "[U] Task Queue started.",
     "cnmd.subagent.loadfail": "[U] unable to load task file:",

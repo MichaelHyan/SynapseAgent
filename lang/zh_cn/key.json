@@ -28,6 +28,7 @@
     "cnmd.bot.refuseloot": "[U] 已驳回命令",
     "cnmd.bot.refuse": "[U] 已驳回命令, 终止当前任务",
     "cnmd.bot.toolfail": "[U] Agent指令调用失败：",
+    "cnmd.bot.toolunknown": "[U] Agent指令触发拦截",
     "cnmd.bot.callfail": "[U] 指令格式有误，请重新检查指令格式。",
     "cnmd.mem.save": "[U] 已保存记忆",
     "cnmd.mem.analyse": "[U] 已整理记忆",

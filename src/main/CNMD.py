@@ -37,7 +37,7 @@ class CNMD():
     def __init__(self,prompt_init = 'agent_base'):
         with open('./config/config.json',encoding='utf-8') as f:
             self.config = json.load(f)
-        with open('./config/config.json',encoding='utf-8') as f:
+        with open('./config/config_intercept.json',encoding='utf-8') as f:
             self.intercept = json.load(f)
         self.TIME_STAMP = round(time.time())
         self.stage_break = self.config['break']
@@ -399,7 +399,21 @@ class CNMD():
                 content = lang.lang['cnmd.bot.responsefail']
                 reasoning_content = lang.lang['cnmd.bot.responsefail']
             calls,text = tag_parser.parse(content)
-            if calls == [] and '<toolcall>'.replace('toolcall','tool_call') not in content:
+            if calls == [] and self._intercept_check(content):
+                self.msg_stack.append(f'{lang.lang['cnmd.bot.toolunknown']}')
+                self.msg_stack.append(text)
+                self.messages.append(
+                    {
+                        "role": "system",
+                        "content": content
+                    }
+                )
+                self.msg.append(self.tic)
+                self.tic += 1
+                self.toolcall.append(['none'])
+                self.log()
+                cmd = lang.lang['cnmd.bot.callfail']
+            elif calls == [] and '<toolcall>'.replace('toolcall','tool_call') not in content:
                 if text == '':
                     self.msg_stack.append(lang.lang['cnmd.bot.responsefailcontinue'])
                 else:
@@ -416,22 +430,6 @@ class CNMD():
                 self.log()
                 break
             elif calls == [] and '<toolcall>'.replace('toolcall','tool_call') in content:
-                if text == '':
-                    self.msg_stack.append(lang.lang['cnmd.bot.responsefailcontinue'])
-                else:
-                    self.msg_stack.append(text)
-                self.messages.append(
-                    {
-                        "role": "system",
-                        "content": content
-                    }
-                )
-                self.msg.append(self.tic)
-                self.tic += 1
-                self.toolcall.append(['none'])
-                self.log()
-                cmd = lang.lang['cnmd.bot.callfail']
-            elif calls == [] and self._intercept_check(content):
                 if text == '':
                     self.msg_stack.append(lang.lang['cnmd.bot.responsefailcontinue'])
                 else:
