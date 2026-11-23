@@ -398,7 +398,7 @@ class CNMD():
                 reasoning_content = response.get('reasoning_content')
                 if reasoning_content and self.allow_reasoning:
                     while REPLACE_STRING_START in reasoning_content or REPLACE_STRING_END in reasoning_content:
-                        reasoning_content.replace(REPLACE_STRING_START,'').replace(REPLACE_STRING_END,'')
+                        reasoning_content = reasoning_content.replace(REPLACE_STRING_START,'').replace(REPLACE_STRING_END,'')
                     self.msg_stack.append(f'reasoning: {reasoning_content}')
             else:
                 content = lang.lang['cnmd.bot.responsefail']
@@ -407,8 +407,7 @@ class CNMD():
             if calls == [] and self._intercept_check(content):
                 self.msg_stack.append(f'{lang.lang['cnmd.bot.toolunknown']}')
                 while REPLACE_STRING_START in text or REPLACE_STRING_END in text:
-                    self.msg_stack.append('bruh')
-                    text.replace(REPLACE_STRING_START,'').replace(REPLACE_STRING_END,'')
+                    text = text.replace(REPLACE_STRING_START,'').replace(REPLACE_STRING_END,'')
                 self.msg_stack.append(text)
                 self.messages.append(
                     {
@@ -426,7 +425,7 @@ class CNMD():
                     self.msg_stack.append(lang.lang['cnmd.bot.responsefailcontinue'])
                 else:
                     while REPLACE_STRING_START in text or REPLACE_STRING_END in text:
-                        text.replace(REPLACE_STRING_START,'').replace(REPLACE_STRING_END,'')
+                        text = text.replace(REPLACE_STRING_START,'').replace(REPLACE_STRING_END,'')
                     self.msg_stack.append(text)
                 self.messages.append(
                     {
@@ -444,7 +443,7 @@ class CNMD():
                     self.msg_stack.append(lang.lang['cnmd.bot.responsefailcontinue'])
                 else:
                     while REPLACE_STRING_START in text or REPLACE_STRING_END in text:
-                        text.replace(REPLACE_STRING_START,'').replace(REPLACE_STRING_END,'')
+                        text = text.replace(REPLACE_STRING_START,'').replace(REPLACE_STRING_END,'')
                     self.msg_stack.append(text)
                 self.messages.append(
                     {
@@ -460,7 +459,7 @@ class CNMD():
             else:
                 if text != '':
                     while REPLACE_STRING_START in text or REPLACE_STRING_END in text:
-                        text.replace(REPLACE_STRING_START,'').replace(REPLACE_STRING_END,'')
+                        text = text.replace(REPLACE_STRING_START,'').replace(REPLACE_STRING_END,'')
                     self.msg_stack.append(text)
                 self.messages.append(
                     {
