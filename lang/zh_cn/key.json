@@ -65,6 +65,7 @@
     "bot.tool.memorynone": "[A] 未找到相关信息",
     "bot.tool.setheader": "[A] 设置网站header: ",
     "bot.tool.commandnotfound": "[A] 未找到指令",
+    "bot.tool.error": "[A] 遇到错误：",
     "bot.tool.refuse": "[A] Agent已驳回重复指令, 请继续任务",
     "bot.tool.fileunreadable": "[A] 文件大小过大: ",
     "bot.tool.filewritedone": "[A] 写入文件完成",

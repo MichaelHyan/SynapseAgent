@@ -65,6 +65,7 @@
     "bot.tool.memorynone": "[A] nothing found",
     "bot.tool.setheader": "[A] web header set: ",
     "bot.tool.commandnotfound": "[A] command not found",
+    "bot.tool.error": "[A] error: ",
     "bot.tool.refuse": "[A] Agent refused last repeated command, please continue on the mission",
     "bot.tool.fileunreadable": "[A] file too large to read: ",
     "bot.tool.filewritedone": "[A] file write complete",

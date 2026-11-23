@@ -27,7 +27,10 @@ def tool(function:str):
             'cli':f'{REPLACE_STRING_START}{ori_function}{REPLACE_STRING_END}'}
     func = _REGISTRY.get(function)
     if func:
-        result = func(args)
+        try:
+            result = func(args)
+        except Exception as e:
+            result = error(e)
     else:
         result = notfound(function)
     return result
@@ -41,6 +44,11 @@ def method(name=None):
 @method()
 def notfound(e):
     return {'sys':lang.lang['bot.tool.commandnotfound'],
+            'cli':f'{lang.lang['cnmd.bot.toolfail']}{e}'}
+
+@method()
+def error(e):
+    return {'sys':lang.lang['bot.tool.error'],
             'cli':f'{lang.lang['cnmd.bot.toolfail']}{e}'}
 
 @method()
