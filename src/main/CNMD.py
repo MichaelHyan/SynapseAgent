@@ -406,7 +406,8 @@ class CNMD():
             calls,text = tag_parser.parse(content)
             if calls == [] and self._intercept_check(content):
                 self.msg_stack.append(f'{lang.lang['cnmd.bot.toolunknown']}')
-                while REPLACE_STRING_START in reasoning_content or REPLACE_STRING_END in text:
+                while REPLACE_STRING_START in text or REPLACE_STRING_END in text:
+                    self.msg_stack.append('bruh')
                     text.replace(REPLACE_STRING_START,'').replace(REPLACE_STRING_END,'')
                 self.msg_stack.append(text)
                 self.messages.append(
@@ -424,7 +425,7 @@ class CNMD():
                 if text == '':
                     self.msg_stack.append(lang.lang['cnmd.bot.responsefailcontinue'])
                 else:
-                    while REPLACE_STRING_START in reasoning_content or REPLACE_STRING_END in text:
+                    while REPLACE_STRING_START in text or REPLACE_STRING_END in text:
                         text.replace(REPLACE_STRING_START,'').replace(REPLACE_STRING_END,'')
                     self.msg_stack.append(text)
                 self.messages.append(
@@ -442,7 +443,7 @@ class CNMD():
                 if text == '':
                     self.msg_stack.append(lang.lang['cnmd.bot.responsefailcontinue'])
                 else:
-                    while REPLACE_STRING_START in reasoning_content or REPLACE_STRING_END in text:
+                    while REPLACE_STRING_START in text or REPLACE_STRING_END in text:
                         text.replace(REPLACE_STRING_START,'').replace(REPLACE_STRING_END,'')
                     self.msg_stack.append(text)
                 self.messages.append(
@@ -458,7 +459,7 @@ class CNMD():
                 cmd = lang.lang['cnmd.bot.callfail']
             else:
                 if text != '':
-                    while REPLACE_STRING_START in reasoning_content or REPLACE_STRING_END in text:
+                    while REPLACE_STRING_START in text or REPLACE_STRING_END in text:
                         text.replace(REPLACE_STRING_START,'').replace(REPLACE_STRING_END,'')
                     self.msg_stack.append(text)
                 self.messages.append(
