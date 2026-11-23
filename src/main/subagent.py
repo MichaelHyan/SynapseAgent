@@ -103,7 +103,7 @@ class SubAgent():
                 if i[:7] == 'report ':
                     msg_stack.append(f'SubAgent{self.number}: FINISH')
                     return i[7:]
-            if calls == [] and '<tool_call>' not in content:
+            if calls == [] and '<toolcall>'.replace('toolcall','tool_call') not in content:
                 if text == '':
                     msg_stack.append(f'SubAgent{self.number}:{lang.lang['cnmd.bot.responsefailcontinue']}')
                 else:
@@ -118,7 +118,7 @@ class SubAgent():
                 self.tic += 1
                 self.toolcall.append(['none'])
                 self.log()
-            elif calls == [] and '<tool_call>' in content:
+            elif calls == [] and '<toolcall>'.replace('toolcall','tool_call') in content:
                 if text == '':
                     msg_stack.append(f'SubAgent{self.number}:{lang.lang['cnmd.bot.responsefailcontinue']}')
                 else:

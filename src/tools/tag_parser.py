@@ -1,7 +1,7 @@
 import re
 def parse(text):
     tag_contents = []
-    pattern = r'<tool_call>(.*?)</tool_call>'
+    pattern = r'<toolcall>(.*?)</toolcall>'.replace('toolcall','tool_call')
     matches = re.finditer(pattern, text, re.DOTALL)
     for match in matches:
         tag_contents.append(match.group(1))

@@ -7,9 +7,13 @@ import urllib.parse
 _REGISTRY = {}
 SKIP_CALL = []
 
+REPLACE_STRING_START = f'<{'tool_call'}>'
+REPLACE_STRING_END = f'</{'tool_call'}>'
+
 def tool(function:str):
     ori_function = copy.deepcopy(function)
-    function = function.replace('<tool_call>','').replace('</tool_call>','')
+    while REPLACE_STRING_START in function or REPLACE_STRING_END in function:
+        function = function.replace(REPLACE_STRING_START,'').replace(REPLACE_STRING_END,'')
     if function[0] == '\n':
         function = function[1:]
     if function[-1] == '\n':
@@ -19,8 +23,8 @@ def tool(function:str):
     except:
         args = None
     if function in SKIP_CALL:
-        return {'sys':'<tool_call>{''}PAUSE{''}</tool_call>',
-            'cli':f'<tool_call>{ori_function}</tool_call>'}
+        return {'sys':f'{REPLACE_STRING_START}PAUSE{REPLACE_STRING_END}',
+            'cli':f'{REPLACE_STRING_START}{ori_function}{REPLACE_STRING_END}'}
     func = _REGISTRY.get(function)
     if func:
         result = func(args)
@@ -167,7 +171,7 @@ def mem(args:str):
 @method()
 def image_read(path:str):
     if 'http' in path:
-        sys = f'<agent_imageurl>{path}</agent_imageurl>'
+        sys = f'<{'agent_imageurl'}>{path}</{'agent_imageurl'}>'
     else:
         sys = fileedit.encode(path,'agent_image')
     return {'sys':sys,
@@ -176,7 +180,7 @@ def image_read(path:str):
 @method()
 def audio_read(path:str):
     if 'http' in path:
-        sys = f'<agent_audiourl>{path}</agent_audiourl>'
+        sys = f'<{'agent_audiourl'}>{path}</{'agent_audiourl'}>'
     else:
         sys = fileedit.encode(path,'agent_audio')
     return {'sys':sys,
@@ -185,7 +189,7 @@ def audio_read(path:str):
 @method()
 def video_read(path:str):
     if 'http' in path:
-        sys = f'<agent_videourl>{path}</agent_videourl>'
+        sys = f'<{'agent_videourl'}>{path}</{'agent_videourl'}>'
     else:
         sys = fileedit.encode(path,'agent_video')
     return {'sys':sys,
@@ -204,7 +208,7 @@ def screen_cord(args=None):
     else:
         cord = screenshot.get_screen_cord(eval(args))
     return {
-        "sys": f'{cord['cord']}<agent_image>{cord['image']}</agent_image>',
+        "sys": f'{cord['cord']}<{'agent_image'}>{cord['image']}</{'agent_image'}>',
         'cli': f'{lang.lang['bot.agentlog.screenshot']}'
     }
 
@@ -224,7 +228,7 @@ def click(args:str):
     time.sleep(1)
     cord = screenshot.get_screen_cord()
     return {
-        "sys": f'{cord['cord']}<agent_image>{cord['image']}</agent_image>',
+        "sys": f'{cord['cord']}<{'agent_image'}>{cord['image']}</{'agent_image'}>',
         'cli': f'{lang.lang['bot.agentlog.click']}{args_temp}'
     }
 
@@ -234,7 +238,7 @@ def typewrite(args:str):
     time.sleep(1)
     cord = screenshot.get_screen_cord()
     return {
-        "sys": f'{cord['cord']}<agent_image>{cord['image']}</agent_image>',
+        "sys": f'{cord['cord']}<{'agent_image'}>{cord['image']}</{'agent_image'}>',
         'cli': f'{lang.lang['bot.agentlog.typewrite']}{args}'
     }
 
@@ -272,5 +276,5 @@ def mcp(args:str=None):
 @method()
 def taskstart(args=None):
     subagent.startsubagent()
-    return {'sys':f'<tool_call>{''}PAUSE{''}</tool_call>',
+    return {'sys':f'{REPLACE_STRING_START}{''}PAUSE{''}{REPLACE_STRING_END}',
             'cli':f'{lang.lang['cnmd.subagent.start']}'}

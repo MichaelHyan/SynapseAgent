@@ -23,7 +23,7 @@ def get_complex_cord():
     image = screenshot.capture_all_base64(prefix='image')
     cord = ''
     for i in cords:
-        image += f'<image>{i['image']}</image>'
+        image += f'<{'image'}>{i['image']}</{'image'}>'
         cord += f'{i['cord']}\n'
     return f'{image}{cord}'
 
