@@ -1,6 +1,5 @@
 import subprocess
-import threading
-import time,os
+import os
 import shutil
 import platform
 import locale
@@ -8,6 +7,8 @@ import locale
 cmd_output = ''
 
 IS_WIN = platform.system() == 'Windows'
+
+CMD_TIMEOUT = 60
 
 
 def _shell_encoding():
@@ -35,6 +36,34 @@ def _smart_decode(raw, encodings=None):
     return raw.decode(encodings[0], errors='replace')
 
 
+def _append(out):
+    global cmd_output
+    if not out:
+        return
+    cmd_output += out
+    if not out.endswith('\n'):
+        cmd_output += '\n'
+
+
+def _kill_tree(process):
+    if process.poll() is not None:
+        return
+    try:
+        if IS_WIN:
+            subprocess.run(
+                ['taskkill', '/F', '/T', '/PID', str(process.pid)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        else:
+            process.kill()
+    except Exception:
+        try:
+            process.kill()
+        except Exception:
+            pass
+
+
 def cmd(cmd):
     global cmd_output
     try:
@@ -45,12 +74,18 @@ def cmd(cmd):
                                    encoding=_shell_encoding(),
                                    errors='replace',
                                    shell=True)
-        for output in iter(process.stdout.readline, ''):
-            if output:
-                cmd_output += f'{output.strip()}\n'
-        process.stdout.close()
-        return_code = process.wait()
-        cmd_output += f"command end, return code: {return_code}\n"
+        try:
+            out, _ = process.communicate(timeout=CMD_TIMEOUT)
+            _append(out)
+            cmd_output += f"command end, return code: {process.returncode}\n"
+        except subprocess.TimeoutExpired:
+            _kill_tree(process)
+            try:
+                out, _ = process.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                out = ''
+            _append(out)
+            cmd_output += f"command timeout ({CMD_TIMEOUT}s), process killed\n"
     except Exception as e:
         cmd_output += f'{e}\n'
 
@@ -67,13 +102,25 @@ def pws(cmd):
             if not powershell_path:
                 cmd_output += 'powershell not available: pwsh not found on this platform\n'
                 return
-        result = subprocess.run(
+        process = subprocess.Popen(
             [powershell_path, "-Command", cmd],
-            check=False,
-            capture_output=True
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
-        cmd_output += f'{_smart_decode(result.stdout)}\n'
-        if result.stderr:
-            cmd_output += f'{_smart_decode(result.stderr)}\n'
+        try:
+            out, err = process.communicate(timeout=CMD_TIMEOUT)
+            _append(_smart_decode(out))
+            if err:
+                _append(_smart_decode(err))
+        except subprocess.TimeoutExpired:
+            _kill_tree(process)
+            try:
+                out, err = process.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                out, err = b'', b''
+            _append(_smart_decode(out))
+            if err:
+                _append(_smart_decode(err))
+            cmd_output += f"command timeout ({CMD_TIMEOUT}s), process killed\n"
     except Exception as e:
         cmd_output += f'{e}\n'

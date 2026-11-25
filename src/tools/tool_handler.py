@@ -1,7 +1,8 @@
 from src.main import subagent
 from src.tools import autogui, fileedit, lang, mcp_call, memory, runcmd, screenshot, skills, timer
 from src.tools import webgrab
-import json,threading,time,copy
+from src.tools import tag_parser
+import json,time,copy
 import urllib.parse
 
 _REGISTRY = {}
@@ -12,8 +13,7 @@ REPLACE_STRING_END = f'</{'tool_call'}>'
 
 def tool(function:str):
     ori_function = copy.deepcopy(function)
-    while REPLACE_STRING_START in function or REPLACE_STRING_END in function:
-        function = function.replace(REPLACE_STRING_START,'').replace(REPLACE_STRING_END,'')
+    function = tag_parser.strip_tags(function)
     if function[0] == '\n':
         function = function[1:]
     if function[-1] == '\n':
@@ -93,8 +93,7 @@ def search_string(args:str):
 @method()
 def cmd(args:str):
     runcmd.cmd_output=''
-    threading.Thread(target=runcmd.cmd, args=(args,)).start()
-    time.sleep(5)
+    runcmd.cmd(args)
     return {'sys':runcmd.cmd_output,
             'cli':f'{lang.lang['bot.agentlog.cmd']}{args}'}
 
@@ -106,8 +105,7 @@ def cmdresult(args=None):
 @method()
 def powershell(args:str):
     runcmd.cmd_output=''
-    threading.Thread(target=runcmd.pws, args=(args,)).start()
-    time.sleep(5)
+    runcmd.pws(args)
     return {'sys':runcmd.cmd_output,
             'cli':f'{lang.lang['bot.agentlog.powershell']}{args}'}
 

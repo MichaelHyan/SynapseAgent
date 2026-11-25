@@ -397,8 +397,7 @@ class CNMD():
                 content = response.get('content')
                 reasoning_content = response.get('reasoning_content')
                 if reasoning_content and self.allow_reasoning:
-                    while REPLACE_STRING_START in reasoning_content or REPLACE_STRING_END in reasoning_content:
-                        reasoning_content = reasoning_content.replace(REPLACE_STRING_START,'').replace(REPLACE_STRING_END,'')
+                    reasoning_content = tag_parser.strip_tags(reasoning_content)
                     self.msg_stack.append(f'reasoning: {reasoning_content}')
             else:
                 content = lang.lang['cnmd.bot.responsefail']
@@ -406,8 +405,7 @@ class CNMD():
             calls,text = tag_parser.parse(content)
             if calls == [] and self._intercept_check(content):
                 self.msg_stack.append(f'{lang.lang['cnmd.bot.toolunknown']}')
-                while REPLACE_STRING_START in text or REPLACE_STRING_END in text:
-                    text = text.replace(REPLACE_STRING_START,'').replace(REPLACE_STRING_END,'')
+                text = tag_parser.strip_tags(text)
                 self.msg_stack.append(text)
                 self.messages.append(
                     {
@@ -424,8 +422,7 @@ class CNMD():
                 if text == '':
                     self.msg_stack.append(lang.lang['cnmd.bot.responsefailcontinue'])
                 else:
-                    while REPLACE_STRING_START in text or REPLACE_STRING_END in text:
-                        text = text.replace(REPLACE_STRING_START,'').replace(REPLACE_STRING_END,'')
+                    text = tag_parser.strip_tags(text)
                     self.msg_stack.append(text)
                 self.messages.append(
                     {
@@ -442,8 +439,7 @@ class CNMD():
                 if text == '':
                     self.msg_stack.append(lang.lang['cnmd.bot.responsefailcontinue'])
                 else:
-                    while REPLACE_STRING_START in text or REPLACE_STRING_END in text:
-                        text = text.replace(REPLACE_STRING_START,'').replace(REPLACE_STRING_END,'')
+                    text = tag_parser.strip_tags(text)
                     self.msg_stack.append(text)
                 self.messages.append(
                     {
@@ -458,8 +454,7 @@ class CNMD():
                 cmd = lang.lang['cnmd.bot.callfail']
             else:
                 if text != '':
-                    while REPLACE_STRING_START in text or REPLACE_STRING_END in text:
-                        text = text.replace(REPLACE_STRING_START,'').replace(REPLACE_STRING_END,'')
+                    text = tag_parser.strip_tags(text)
                     self.msg_stack.append(text)
                 self.messages.append(
                     {
