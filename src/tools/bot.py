@@ -1,24 +1,43 @@
 import json
-from openai import OpenAI
 
 config = {}
 config_model = {}
-client = OpenAI(api_key='API_KEY',
-                base_url='BASE_URL')
+client = None
+
+
+def _load_config():
+    global config, config_model
+    with open('./config/config.json', encoding='utf-8') as f:
+        config = json.load(f)
+    with open('./config/config_model.json', encoding='utf-8') as f:
+        config_model = json.load(f)
+
+
+def _ensure_client():
+    global client
+    if client is None:
+        from openai import OpenAI
+        _load_config()
+        client = OpenAI(
+            api_key=config['API_KEY'],
+            base_url=config['BASE_URL']
+        )
+    return client
+
 
 def reload():
-    global config,config_model,client
-    with open('./config/config.json',encoding='utf-8') as f:
-        config = json.load(f)
-    with open('./config/config_model.json',encoding='utf-8') as f:
-        config_model = json.load(f)
+    global client
+    from openai import OpenAI
+    _load_config()
     client = OpenAI(
         api_key=config['API_KEY'],
         base_url=config['BASE_URL']
     )
 
+
 def reply(message):
     try:
+        _ensure_client()
         response = client.chat.completions.create(
             model=config['MODEL'],
             messages=message,
@@ -33,7 +52,7 @@ def reply(message):
                 if hasattr(message, 'reasoning_content'):
                     reasoning_content = message.reasoning_content
                 else:
-                    reasoning_content = None 
+                    reasoning_content = None
         except Exception as e:
             return {
             'content':f'[D] response failed: {e}',
@@ -47,4 +66,3 @@ def reply(message):
     except Exception as e:
         print(str(e))
         return None
-reload()

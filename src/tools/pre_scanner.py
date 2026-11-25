@@ -2,10 +2,11 @@ import src.tools.multymodalhandler as multymodel
 import src.tools.screenshot as screenshot
 import src.tools.bot as bot
 import src.tools.lang as lang
-import pyautogui,json
-WIDTH,HIGHT= pyautogui.size()
+import json
 
 def get_complex_cord():
+    import pyautogui
+    WIDTH,HIGHT = pyautogui.size()
     x_range = WIDTH//960
     y_range = HIGHT//540
     cords = []

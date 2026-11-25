@@ -1,14 +1,26 @@
 import json
-import json,platform
+import platform
 
-with open('./config/config.json',encoding='utf-8') as f:
-    config_base = json.load(f)
-with open('./prompt_loader/config.json',encoding='utf-8') as f:
-    config = json.load(f)
+_base_config = None
+_loader_config = None
+
+
+def _load_configs():
+    global _base_config, _loader_config
+    if _base_config is None:
+        with open('./config/config.json', encoding='utf-8') as f:
+            _base_config = json.load(f)
+    if _loader_config is None:
+        with open('./prompt_loader/config.json', encoding='utf-8') as f:
+            _loader_config = json.load(f)
+
 
 def load(prp:str):
     if prp[:15] == 'PROMPTOVERWRITE':
             return prp[15:].strip()
+    _load_configs()
+    config = _loader_config
+    config_base = _base_config
     prompt = ''
     try:
         p = config[prp]

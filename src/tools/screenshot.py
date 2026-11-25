@@ -2,10 +2,7 @@ import ctypes
 from ctypes import wintypes
 import io
 import base64
-import cv2
-import numpy as np
-from PIL import Image
-from PIL import ImageGrab
+
 user32 = ctypes.windll.user32
 gdi32 = ctypes.windll.gdi32
 try:
@@ -29,7 +26,8 @@ class BITMAPINFOHEADER(ctypes.Structure):
         ("biClrImportant", wintypes.DWORD),
     ]
 
-def grab_virtual_screen() -> Image.Image:
+def grab_virtual_screen():
+    from PIL import Image
     x = user32.GetSystemMetrics(SM_XVIRTUALSCREEN)
     y = user32.GetSystemMetrics(SM_YVIRTUALSCREEN)
     w = user32.GetSystemMetrics(SM_CXVIRTUALSCREEN)
@@ -64,6 +62,9 @@ def capture_all_base64(fmt: str = "PNG", data_uri: bool = False, prefix = '') ->
     return f"<{prefix}>{b64}</{prefix}>"
 
 def get_screen_cord(cord = [0,0,0,0],index = 0,path='./database/screen.png'):
+    import cv2
+    import numpy as np
+    from PIL import ImageGrab
     if cord == [0,0,0,0]:
         screen = ImageGrab.grab()
         offset_x, offset_y = 0, 0
@@ -99,6 +100,7 @@ def get_screen_cord(cord = [0,0,0,0],index = 0,path='./database/screen.png'):
         cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 2)
 
     centers = ''
+    idx = 0
 
     for idx, (x, y, w, h) in enumerate(boxes, start=1):
         label = str(idx+index)

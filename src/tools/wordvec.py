@@ -1,8 +1,18 @@
-import numpy as np
 import json
 
 VECTOR_PATH = "database/vector.txt"
 VECTOR_BINARY = False
+
+_np_module = None
+
+
+def _np():
+    global _np_module
+    if _np_module is None:
+        import numpy as _numpy
+        _np_module = _numpy
+    return _np_module
+
 
 def load_wv(path, binary=False):
     if binary:
@@ -11,6 +21,7 @@ def load_wv(path, binary=False):
 
 
 def _load_text(path):
+    np = _np()
     word2idx = {}
     with open(path, "r", encoding="utf-8") as f:
         first = f.readline().strip().split()
@@ -29,6 +40,7 @@ def _load_text(path):
 
 
 def _load_binary(path):
+    np = _np()
     word2idx = {}
     with open(path, "rb") as f:
         first = f.readline().decode("utf-8").strip().split()
@@ -51,6 +63,7 @@ def _load_binary(path):
 
 
 def cosine_sim(a, b):
+    np = _np()
     a = np.asarray(a, dtype=np.float32)
     b = np.asarray(b, dtype=np.float32)
     denom = np.linalg.norm(a) * np.linalg.norm(b)
@@ -100,7 +113,8 @@ def get_word_vector(wv, word):
     return None
 
 
-def match(target_word,candidate_words,matchs=1):
+def match(target_word, candidate_words, matchs=1):
+    np = _np()
     global wv
     if wv == '':
         wv = load_wv(VECTOR_PATH, VECTOR_BINARY)
@@ -110,15 +124,23 @@ def match(target_word,candidate_words,matchs=1):
     cand_vectors = []
     for cand in candidate_words:
         cand_vector = get_word_vector(wv, cand)
+        if cand_vector is None:
+            continue
         valid_words.append(cand)
         cand_vectors.append(cand_vector)
 
+    if target_vector is None or not valid_words:
+        return []
+
     target_vector = np.asarray(target_vector, dtype=np.float32)
-    target_norm = target_vector / np.linalg.norm(target_vector)
+    target_norm_val = float(np.linalg.norm(target_vector))
+    if target_norm_val == 0:
+        return valid_words[:matchs]
+    target_norm = target_vector / target_norm_val
 
     cand_matrix = np.stack(cand_vectors).astype(np.float32)
     cand_norms = np.linalg.norm(cand_matrix, axis=1)
-    denom = cand_norms * np.linalg.norm(target_vector)
+    denom = cand_norms * target_norm_val
     scores = np.zeros(len(valid_words), dtype=np.float32)
     mask = denom > 0
     scores[mask] = (cand_matrix[mask] @ target_norm) / cand_norms[mask]
@@ -130,18 +152,20 @@ def match(target_word,candidate_words,matchs=1):
         result.append(i[0])
     return result
 
+
 def target(target):
-    with open('database/mem.json','r',encoding='utf-8') as f:
+    with open('database/mem.json', 'r', encoding='utf-8') as f:
         dat = json.load(f)
         candidate_words = []
-        for k,v in dat.items():
+        for k, v in dat.items():
             candidate_words.append(k)
     result = []
     for word in target:
-        compare = match(word,candidate_words)
+        compare = match(word, candidate_words)
         for c in compare:
             if c not in result:
                 result.append(c)
     return result
+
 
 wv = ''

@@ -9,12 +9,20 @@ import ipaddress
 import re
 
 try:
-    from .lang import lang as _lang
+    from . import lang as _lang_module
 except Exception:
     try:
-        from lang import lang as _lang
+        import lang as _lang_module
     except Exception:
-        _lang = {}
+        _lang_module = None
+
+
+def _L(key):
+    """惰性获取语言文本。lang 模块不可用时回退为 key 本身。"""
+    if _lang_module is None:
+        return key
+    return _lang_module.lang[key]
+
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -89,27 +97,27 @@ def _check_url(url, cfg):
     try:
         parts = urllib.parse.urlsplit(url)
     except Exception:
-        return False, _lang['bot.tool.weburlerror']
+        return False, _L('bot.tool.weburlerror')
 
     scheme = (parts.scheme or '').lower()
     schemes = [str(s).lower() for s in cfg.get('scheme_whitelist', [])]
     if scheme not in schemes:
-        return False, _lang['bot.tool.webscheme']
+        return False, _L('bot.tool.webscheme')
 
     host = parts.hostname
     if not host:
-        return False, _lang['bot.tool.webnohost']
+        return False, _L('bot.tool.webnohost')
 
     try:
         port = parts.port
     except ValueError:
-        return False, _lang['bot.tool.webportinvalid']
+        return False, _L('bot.tool.webportinvalid')
 
     if port is None:
         port = 443 if scheme == 'https' else 80
 
     if port not in cfg.get('port_whitelist', []):
-        return False, _lang['bot.tool.webport']
+        return False, _L('bot.tool.webport')
 
     if cfg.get('block_private_ip', True):
         try:
@@ -121,7 +129,7 @@ def _check_url(url, cfg):
         for info in infos:
             addr = info[4][0]
             if _ip_blocked(addr, networks):
-                return False, _lang['bot.tool.webipblocked']
+                return False, _L('bot.tool.webipblocked')
 
     return True, None
 
@@ -137,7 +145,7 @@ class _CheckedRedirectHandler(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, hdrs, newurl):
         ok, _ = _check_url(newurl, self._cfg)
         if not ok:
-            raise _BlockedError(_lang['bot.tool.webredirect'])
+            raise _BlockedError(_L('bot.tool.webredirect'))
         return super().redirect_request(req, fp, code, msg, hdrs, newurl)
 
 
@@ -153,7 +161,7 @@ def get_html(url):
     cfg = _load_config()
 
     if not isinstance(url, str):
-        return _lang['bot.tool.webparamerror']
+        return _L('bot.tool.webparamerror')
 
     ok, reason = _check_url(url, cfg)
     if not ok:
@@ -183,7 +191,7 @@ def get_html(url):
         max_bytes = cfg.get('max_response_bytes', 5242880)
         html_bytes = response.read(max_bytes + 1)
         if len(html_bytes) > max_bytes:
-            return _lang['bot.tool.webtoolarge']
+            return _L('bot.tool.webtoolarge')
 
         try:
             return html_bytes.decode('utf-8')
@@ -193,7 +201,7 @@ def get_html(url):
     except _BlockedError as e:
         return str(e)
     except Exception:
-        return _lang['bot.tool.weberror']
+        return _L('bot.tool.weberror')
 
 
 def ping(host):
@@ -201,7 +209,7 @@ def ping(host):
     ping_cfg = cfg.get('ping', {}) or {}
 
     if not ping_cfg.get('enabled', True):
-        return _lang['bot.tool.pingdisabled']
+        return _L('bot.tool.pingdisabled')
 
     host_str = str(host)
     pattern = ping_cfg.get('host_pattern', r'^[A-Za-z0-9][A-Za-z0-9.\-]{0,252}$')
@@ -210,7 +218,7 @@ def ping(host):
     except re.error:
         passed = False
     if not passed:
-        return _lang['bot.tool.pingblocked']
+        return _L('bot.tool.pingblocked')
 
     param = '-n' if platform.system().lower() == 'windows' else '-c'
     count_param = str(ping_cfg.get('count', 4))
@@ -220,4 +228,4 @@ def ping(host):
         response = subprocess.run(command, capture_output=True, text=True, timeout=timeout)
         return response.stdout
     except Exception:
-        return _lang['bot.tool.pingerror']
+        return _L('bot.tool.pingerror')

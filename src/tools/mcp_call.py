@@ -1,18 +1,24 @@
 import asyncio, json
 from contextlib import asynccontextmanager
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
-from mcp.client.streamable_http import streamable_http_client
-import httpx
 import src.tools.lang as lang
 
 USE_CN_MIRROR = True
 CN_NPM_REGISTRY = "https://registry.npmmirror.com"
 
-with open('./config/config_mcp.json', 'r', encoding='utf-8') as f:
-    MCP_SERVERS = json.load(f)
+_MCP_SERVERS = None
 
-def _build_server_params(server_config: dict) -> StdioServerParameters:
+def _servers():
+    global _MCP_SERVERS
+    if _MCP_SERVERS is None:
+        try:
+            with open('./config/config_mcp.json', 'r', encoding='utf-8') as f:
+                _MCP_SERVERS = json.load(f)
+        except Exception:
+            _MCP_SERVERS = {}
+    return _MCP_SERVERS
+
+def _build_server_params(server_config):
+    from mcp import StdioServerParameters
     command = server_config["command"]
     args = list(server_config.get("args", []))
     env = dict(server_config.get("env") or {})
@@ -20,12 +26,16 @@ def _build_server_params(server_config: dict) -> StdioServerParameters:
         env.setdefault("NPM_CONFIG_REGISTRY", CN_NPM_REGISTRY)
     return StdioServerParameters(command=command, args=args, env=env)
 
-def _is_remote(server_config: dict) -> bool:
+def _is_remote(server_config):
     return "url" in server_config
 
 @asynccontextmanager
 async def _open_session(server_config):
+    from mcp import ClientSession
+    from mcp.client.stdio import stdio_client
+    from mcp.client.streamable_http import streamable_http_client
     if _is_remote(server_config):
+        import httpx
         url = server_config["url"]
         headers = {
             "Accept": "application/json, text/event-stream",
@@ -42,7 +52,7 @@ async def _open_session(server_config):
             async with ClientSession(read, write) as session:
                 yield session
 
-async def _list_tools_async(server_config: dict) -> list[dict]:
+async def _list_tools_async(server_config):
     async with _open_session(server_config) as session:
         await session.initialize()
         tools_result = await session.list_tools()
@@ -60,11 +70,11 @@ async def _list_tools_async(server_config: dict) -> list[dict]:
         ]
 
 def list_tools(config: str) -> list[dict]:
-    return asyncio.run(_list_tools_async(MCP_SERVERS[config]))
+    return asyncio.run(_list_tools_async(_servers()[config]))
 
 def get_mcp_list() -> list:
     result = []
-    for server_name, server_config in MCP_SERVERS.items():
+    for server_name, server_config in _servers().items():
         result.append({
             'name': server_name,
             'description': server_config.get("description")
@@ -95,5 +105,5 @@ def call_tool(
     tool_name: str,
     arguments: dict | None = None,
 ) -> str:
-    server_config = MCP_SERVERS[config]
+    server_config = _servers()[config]
     return asyncio.run(_call_tool_async(server_config, tool_name, arguments or {}))

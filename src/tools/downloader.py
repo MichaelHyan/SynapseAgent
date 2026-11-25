@@ -1,12 +1,11 @@
-
 import os
 import base64
 import hashlib
-import requests,time
-from Crypto.Cipher import AES
+import time
 from urllib.parse import quote
 
 def decrypt(data: bytes, key: bytes) -> bytes:
+    from Crypto.Cipher import AES
     cipher = AES.new(key, AES.MODE_ECB)
     decrypted = cipher.decrypt(data)
     pad_len = decrypted[-1]
@@ -41,6 +40,7 @@ def download_media_from_cdn(cdn_base_url: str,
                             encrypt_query_param: str,
                             aes_key: str, 
                             save_path: str) -> str:
+    import requests
     url = f"{cdn_base_url}/download?encrypted_query_param={quote(encrypt_query_param)}"
     resp = requests.get(url, timeout=60)
     resp.raise_for_status()

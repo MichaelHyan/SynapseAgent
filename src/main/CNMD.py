@@ -37,11 +37,14 @@ REPLACE_STRING_START = f'<{'tool_call'}>'
 REPLACE_STRING_END = f'</{'tool_call'}>'
 
 class CNMD():
-    def __init__(self,prompt_init = 'agent_base'):
+    def _load_config(self):
         with open('./config/config.json',encoding='utf-8') as f:
             self.config = json.load(f)
         with open('./config/config_intercept.json',encoding='utf-8') as f:
             self.intercept = json.load(f)
+
+    def __init__(self,prompt_init = 'agent_base'):
+        self._load_config()
         self.TIME_STAMP = round(time.time())
         self.stage_break = self.config['break']
         self.prompt_init = prompt_init
@@ -257,8 +260,10 @@ class CNMD():
     
     def _reset(self,compress=None):
         bot.reload()
-        with open('./config/config.json',encoding='utf-8') as f:
-            self.config = json.load(f)
+        self._load_config()
+        self.stage_break = self.config['break']
+        self.allow_cmd = self.config['cmd_check']
+        self.enable_log = self.config['enable_log']
         self.cmd_check = []
         self.TIME_STAMP = round(time.time())
         self.prompt = prompt.load(self.prompt_init)

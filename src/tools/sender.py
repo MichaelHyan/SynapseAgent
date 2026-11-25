@@ -1,12 +1,11 @@
-#won`t work without wechat port`
+#won`t work without wechat port
 import os
 import sys
 import time
 import uuid
 import base64
 import hashlib
-import requests, random
-from Crypto.Cipher import AES
+import random
 from urllib.parse import quote
 
 DEFAULT_BASE_URL = "https://ilinkai.weixin.qq.com"
@@ -40,6 +39,7 @@ def _ensure_trailing_slash(url: str) -> str:
     return url if url.endswith("/") else url + "/"
 
 def _aes_ecb_encrypt(data: bytes, key: bytes) -> bytes:
+    from Crypto.Cipher import AES
     pad_len = 16 - (len(data) % 16)
     padded = data + bytes([pad_len] * pad_len)
     cipher = AES.new(key, AES.MODE_ECB)
@@ -61,6 +61,7 @@ class FileSender:
 
     def _post(self, endpoint: str, body: dict, timeout: int = DEFAULT_API_TIMEOUT) -> dict:
         """发送POST请求"""
+        import requests
         url = _ensure_trailing_slash(self.base_url) + endpoint
         headers = _build_headers(self.token)
         body.setdefault("base_info", {}).setdefault("channel_version", CHANNEL_VERSION)
@@ -131,6 +132,7 @@ class FileSender:
         Returns:
             dict with keys: encrypt_query_param, aes_key_b64, ciphertext_size, raw_size
         """
+        import requests
         aes_key = os.urandom(16)
         aes_key_hex = aes_key.hex()
         filekey = uuid.uuid4().hex

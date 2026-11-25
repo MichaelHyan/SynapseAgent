@@ -1,7 +1,6 @@
 from src.tools import fileedit
 from src.tools import memory
 from prompt_loader import prompt
-import src.tools.tool_handler as tool
 import src.tools.bot as bot
 import src.tools.lang as lang
 import src.tools.tag_parser as tag_parser
@@ -78,6 +77,7 @@ class SubAgent():
                 json.dump(self.toolcall,f,indent=4,ensure_ascii=False)
 
     def submission(self):
+        import src.tools.tool_handler as tool
         msg_stack.append(f'SubAgent{self.number}: START')
         cmd = copy.deepcopy(self.task)
         while True:

@@ -1,14 +1,27 @@
-import os,base64,shutil
+import os, base64, shutil
+import json, re
 import src.tools.lang as lang
-import json,re
-with open('./config/config.json',encoding='utf-8') as f:
-    config = json.load(f)
 
 SIZE_LIMIT = 1
 
+_config = None
+
+
+def _cfg(key, default=None):
+    global _config
+    if _config is None:
+        with open('./config/config.json', encoding='utf-8') as f:
+            _config = json.load(f)
+    return _config.get(key, default)
+
+
+def _base_path():
+    return _cfg('base_path')
+
+
 def dir(path:str):
     if not path:
-        path = config['base_path']
+        path = _base_path()
     try:
         all_items = os.listdir(path)
         dirs = []
@@ -99,7 +112,7 @@ import os
 
 def list_dir(path):
     if not path:
-        path = config['base_path']
+        path = _base_path()
     response = ''
     response += f"[DIR] {path}\n"
     try:
