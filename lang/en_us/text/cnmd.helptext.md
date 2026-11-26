@@ -28,3 +28,7 @@ Available commands:
 5. Execute tasks
 #execute <index>           - Execute the command requested by Agent
 #e <index>                 - Same as above
+
+6. Subagent
+#subagent                  - Show status of all subagent tasks
+#subagent <number or id>   - Show status of the specified subagent task

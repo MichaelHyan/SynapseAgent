@@ -28,3 +28,7 @@ description: cnmd helptext
 5. 执行任务
 #execute <序号>            - 执行Agent申请的指令
 #e <序号>                  - 同上
+
+6. 子智能体
+#subagent                 - 查看所有子智能体任务状态
+#subagent <序号或ID>      - 查看指定子智能体任务状态

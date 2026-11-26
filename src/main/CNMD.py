@@ -30,7 +30,8 @@ USR_COMMAND = [
     '#mem compress',
     '#execute',
     '#memory',
-    '#dream'
+    '#dream',
+    '#subagent'
     ]
 
 REPLACE_STRING_START = f'<{'tool_call'}>'
@@ -43,7 +44,7 @@ class CNMD():
         with open('./config/config_intercept.json',encoding='utf-8') as f:
             self.intercept = json.load(f)
 
-    def __init__(self,prompt_init = 'agent_base'):
+    def __init__(self,prompt_init = 'agent_base', subagent=False, number=0):
         self._load_config()
         self.TIME_STAMP = round(time.time())
         self.stage_break = self.config['break']
@@ -68,6 +69,13 @@ class CNMD():
         self.enable_log = self.config['enable_log']
         self.status = 0
         self.help_text = lang.text['cnmd.helptext']
+        self.subagent_mode = subagent
+        self.number = number
+        self.report = ''
+        if self.subagent_mode:
+            self.allow_cmd = False
+            self.stage_break = False
+            self.mslock = True
 
     def _similarity(self,str1, str2):
         set1 = set(str1)
@@ -100,7 +108,7 @@ class CNMD():
         else:
             result.append(f"{start}-{nums[-1]}")
         return ",".join(result)
-    
+
     def _user_command(self,cmd:str):
         cmd = cmd.strip()
         ori_cmd = copy.deepcopy(cmd)
@@ -255,9 +263,14 @@ class CNMD():
         elif cmd[0] == '#skipable':
             tool.SKIP_CALL = cmd[1].split()
             self.msg_stack.append(f'{lang.lang['cnmd.base.skipable']}{cmd[1]}')
+        elif cmd[0] == '#subagent':
+            args = cmd[1].strip() if len(cmd) > 1 else None
+            result = tool.subagent_status(args)
+            self.msg_stack.append(result['sys'])
+            return
         else:
             self._correction(ori_cmd)
-    
+
     def _reset(self,compress=None):
         bot.reload()
         self._load_config()
@@ -327,6 +340,8 @@ class CNMD():
                 text = self._content_to_text(i.get('content'), multimodal_filter=True)
                 if text.lstrip().startswith('[A]tool call feedback'):
                     continue
+                if text.lstrip().startswith('[A]subagent report'):
+                    continue
                 if user_text is not None:
                     turns.append((user_text, '\n'.join(agent_text).strip()))
                 user_text = text
@@ -355,12 +370,47 @@ class CNMD():
 
     def log(self):
         if self.enable_log:
-            with open(f'./logs/{self.TIME_STAMP}.json','w',encoding='utf-8') as f:
+            if self.subagent_mode:
+                tag = f'subagent{self.number}_{self.TIME_STAMP}_{threading.get_ident()}'
+            else:
+                tag = f'{self.TIME_STAMP}'
+            with open(f'./logs/{tag}.json','w',encoding='utf-8') as f:
                 json.dump(self.messages,f,indent=4,ensure_ascii=False)
-            with open(f'./logs/{self.TIME_STAMP}_node.json','w',encoding='utf-8') as f:
+            with open(f'./logs/{tag}_node.json','w',encoding='utf-8') as f:
                 json.dump(self.nodelist,f,indent=4,ensure_ascii=False)
-            with open(f'./logs/{self.TIME_STAMP}_tool.json','w',encoding='utf-8') as f:
+            with open(f'./logs/{tag}_tool.json','w',encoding='utf-8') as f:
                 json.dump(self.toolcall,f,indent=4,ensure_ascii=False)
+
+    def _exec_calls(self, calls):
+        """统一执行一组工具调用，只产出普通工具反馈。
+        子代理报告不在此处理，改由 _inject_subagent_reports 在发送给模型前注入。
+        """
+        feedback = ''
+        for i in calls:
+            toolcall = tool.tool(i)
+            feedback += f'{toolcall['sys']}\n---\n'
+            self.msg_stack.append(toolcall['cli'])
+        if feedback.strip() == '':
+            return ''
+        return f'[A]tool call feedback:\n{feedback}'
+
+    def _inject_subagent_reports(self, cmd):
+        """在把消息发送给模型之前，固定查询子代理共享状态并注入报告，取走即清。
+        无报告时原样返回 cmd（即拼接空字符串）；有报告则追加到 cmd 之后。
+        不中断循环，仅影响本轮发给模型的上下文。
+        """
+        reports = tool.pop_subagent_reports()
+        lines = []
+        for r in reports:
+            rep = (r.get('report') or '').strip()
+            if rep != '':
+                lines.append(f'[{r['number']}] {rep}')
+        if not lines:
+            return cmd
+        report_text = '[A]subagent report:\n' + '\n'.join(lines) + '\n'
+        if cmd is None or cmd.strip() == '':
+            return report_text
+        return f'{cmd}\n{report_text}'
 
     def CNMD(self,cmd):
         self.status = 1
@@ -371,24 +421,19 @@ class CNMD():
                 return
             else:
                 if len(cmd.split()) == 1:
-                    cmd = '[A]tool call feedback:\n'
-                    for i in self.cmd_check:
-                        toolcall = tool.tool(i)
-                        cmd += f'{toolcall['sys']}\n'
-                        self.msg_stack.append(toolcall['cli'])
+                    cmd = self._exec_calls(self.cmd_check)
                 else:
                     c = cmd.split()[1:]
-                    cmd = '[A]tool call feedback:\n'
-                    for i in c:
-                        toolcall = tool.tool(self.cmd_check[int(i)])
-                        cmd += f'{toolcall['sys']}\n'
-                        self.msg_stack.append(toolcall['cli'])
+                    calls = [self.cmd_check[int(i)] for i in c]
+                    cmd = self._exec_calls(calls)
 
         self.mstemp = copy.deepcopy(self.msg)
         while True and self.mslock:
             if '<toolcall>PAUSE</toolcall>'.replace('toolcall','tool_call') in cmd:
                 self.status = 0
                 return
+            if not self.subagent_mode:
+                cmd = self._inject_subagent_reports(cmd)
             self.messages.append(multymodel.user(cmd))
             self.msg.append(self.tic)
             self.tic += 1
@@ -408,6 +453,26 @@ class CNMD():
                 content = lang.lang['cnmd.bot.responsefail']
                 reasoning_content = lang.lang['cnmd.bot.responsefail']
             calls,text = tag_parser.parse(content)
+            if self.subagent_mode:
+                report_found = None
+                for i in calls:
+                    s = i.strip()
+                    if s[:7] == 'report ':
+                        report_found = s[7:]
+                        break
+                if report_found is not None:
+                    self.messages.append(
+                        {
+                            "role": "system",
+                            "content": content
+                        }
+                    )
+                    self.msg.append(self.tic)
+                    self.tic += 1
+                    self.toolcall.append(['report'])
+                    self.report = report_found
+                    self.log()
+                    break
             if calls == [] and self._intercept_check(content):
                 self.msg_stack.append(f'{lang.lang['cnmd.bot.toolunknown']}')
                 text = tag_parser.strip_tags(text)
@@ -439,6 +504,8 @@ class CNMD():
                 self.tic += 1
                 self.toolcall.append(['none'])
                 self.log()
+                if not self.subagent_mode and tool.has_running_subagent():
+                    self.msg_stack.append(lang.lang['cnmd.subagent.pending'])
                 break
             elif calls == [] and '<toolcall>'.replace('toolcall','tool_call') in content:
                 if text == '':
@@ -484,11 +551,7 @@ class CNMD():
                     else:
                         self.cmd_check = copy.deepcopy(calls)
                         if not self.allow_cmd:
-                            cmd = '[A]tool call feedback:\n'
-                            for i in calls:
-                                toolcall = tool.tool(i)
-                                cmd += f'{toolcall['sys']}\n---\n'
-                                self.msg_stack.append(toolcall['cli'])
+                            cmd = self._exec_calls(calls)
                         else:
                             cmd = lang.lang['cnmd.base.cmd']
                             k = 0

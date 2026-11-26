@@ -3,12 +3,21 @@ import os
 import shutil
 import platform
 import locale
-
-cmd_output = ''
+import threading
 
 IS_WIN = platform.system() == 'Windows'
 
 CMD_TIMEOUT = 60
+
+_tls = threading.local()
+
+
+def get_output():
+    return getattr(_tls, 'output', '')
+
+
+def clear_output():
+    _tls.output = ''
 
 
 def _shell_encoding():
@@ -37,12 +46,13 @@ def _smart_decode(raw, encodings=None):
 
 
 def _append(out):
-    global cmd_output
     if not out:
         return
-    cmd_output += out
+    cur = getattr(_tls, 'output', '')
+    cur += out
     if not out.endswith('\n'):
-        cmd_output += '\n'
+        cur += '\n'
+    _tls.output = cur
 
 
 def _kill_tree(process):
@@ -65,7 +75,6 @@ def _kill_tree(process):
 
 
 def cmd(cmd):
-    global cmd_output
     try:
         process = subprocess.Popen(cmd,
                                    stdout=subprocess.PIPE,
@@ -77,7 +86,7 @@ def cmd(cmd):
         try:
             out, _ = process.communicate(timeout=CMD_TIMEOUT)
             _append(out)
-            cmd_output += f"command end, return code: {process.returncode}\n"
+            _append(f"command end, return code: {process.returncode}\n")
         except subprocess.TimeoutExpired:
             _kill_tree(process)
             try:
@@ -85,13 +94,12 @@ def cmd(cmd):
             except subprocess.TimeoutExpired:
                 out = ''
             _append(out)
-            cmd_output += f"command timeout ({CMD_TIMEOUT}s), process killed\n"
+            _append(f"command timeout ({CMD_TIMEOUT}s), process killed\n")
     except Exception as e:
-        cmd_output += f'{e}\n'
+        _append(f'{e}\n')
 
 
 def pws(cmd):
-    global cmd_output
     try:
         if IS_WIN:
             powershell_path = os.path.join(
@@ -100,7 +108,7 @@ def pws(cmd):
         else:
             powershell_path = shutil.which('pwsh') or shutil.which('powershell')
             if not powershell_path:
-                cmd_output += 'powershell not available: pwsh not found on this platform\n'
+                _append('powershell not available: pwsh not found on this platform\n')
                 return
         process = subprocess.Popen(
             [powershell_path, "-Command", cmd],
@@ -121,6 +129,6 @@ def pws(cmd):
             _append(_smart_decode(out))
             if err:
                 _append(_smart_decode(err))
-            cmd_output += f"command timeout ({CMD_TIMEOUT}s), process killed\n"
+            _append(f"command timeout ({CMD_TIMEOUT}s), process killed\n")
     except Exception as e:
-        cmd_output += f'{e}\n'
+        _append(f'{e}\n')

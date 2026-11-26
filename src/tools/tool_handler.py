@@ -1,8 +1,7 @@
-from src.main import subagent
 from src.tools import autogui, fileedit, lang, mcp_call, memory, runcmd, screenshot, skills, timer
 from src.tools import webgrab
 from src.tools import tag_parser
-import json,time,copy
+import json,time,copy,threading
 import urllib.parse
 
 _REGISTRY = {}
@@ -10,6 +9,41 @@ SKIP_CALL = []
 
 REPLACE_STRING_START = f'<{'tool_call'}>'
 REPLACE_STRING_END = f'</{'tool_call'}>'
+
+_subagent_lock = threading.Lock()
+_subagent_reports = []
+_subagent_jobs = []
+_subagent_seq = 0
+_SUBAGENT_KEEP = 100
+
+
+def pop_subagent_reports():
+    with _subagent_lock:
+        out = list(_subagent_reports)
+        _subagent_reports.clear()
+    return out
+
+
+def has_running_subagent():
+    with _subagent_lock:
+        for j in _subagent_jobs:
+            if j['status'] == 'running':
+                return True
+        return False
+
+
+def _trim_jobs():
+    if len(_subagent_jobs) <= _SUBAGENT_KEEP:
+        return
+    over = len(_subagent_jobs) - _SUBAGENT_KEEP
+    kept = []
+    for j in _subagent_jobs:
+        if over > 0 and j['status'] != 'running':
+            over -= 1
+            continue
+        kept.append(j)
+    _subagent_jobs[:] = kept
+
 
 def tool(function:str):
     ori_function = copy.deepcopy(function)
@@ -92,26 +126,26 @@ def search_string(args:str):
 
 @method()
 def cmd(args:str):
-    runcmd.cmd_output=''
+    runcmd.clear_output()
     runcmd.cmd(args)
-    return {'sys':runcmd.cmd_output,
+    return {'sys':runcmd.get_output(),
             'cli':f'{lang.lang['bot.agentlog.cmd']}{args}'}
 
 @method()
 def cmdresult(args=None):
-    return {'sys':runcmd.cmd_output,
+    return {'sys':runcmd.get_output(),
             'cli':f'{lang.lang['bot.agentlog.cmdresult']}'}
 
 @method()
 def powershell(args:str):
-    runcmd.cmd_output=''
+    runcmd.clear_output()
     runcmd.pws(args)
-    return {'sys':runcmd.cmd_output,
+    return {'sys':runcmd.get_output(),
             'cli':f'{lang.lang['bot.agentlog.powershell']}{args}'}
 
 @method()
 def powershellresult(args=None):
-    return {'sys':runcmd.cmd_output,
+    return {'sys':runcmd.get_output(),
             'cli':f'{lang.lang['bot.agentlog.cmdresult']}'}
 
 @method()
@@ -280,7 +314,109 @@ def mcp(args:str=None):
                     'cli':f'{lang.lang['cnmd.mcp.usetool']}{args[0]}→{args[1]}'}
 
 @method()
-def taskstart(args=None):
-    subagent.startsubagent()
-    return {'sys':f'{REPLACE_STRING_START}{''}PAUSE{''}{REPLACE_STRING_END}',
-            'cli':f'{lang.lang['cnmd.subagent.start']}'}
+def subagent(args:str=None):
+    """启动子智能体（普通工具，立即返回"已开始运行"提示，任务在后台线程执行）。
+    args 为单条任务文本，或 JSON 数组（多任务并行）。
+    子代理结束后把 report 写入 _subagent_reports，由主 CNMD 循环在发送给模型前
+    固定查询注入；状态记录写入 _subagent_jobs，可用 subagent_status 查询。
+    """
+    global _subagent_seq
+    from src.main.CNMD import CNMD as _CNMD   # 延迟导入，避免循环导入
+    if args is None or args.strip() == '':
+        return {'sys':lang.lang['bot.tool.subagent.empty'],
+                'cli':lang.lang['cnmd.subagent.empty']}
+    text = args.strip()
+    tasks = []
+    if text.startswith('['):
+        try:
+            data = json.loads(text)
+            for idx, item in enumerate(data):
+                if isinstance(item, dict):
+                    tasks.append((item.get('number', idx), str(item.get('task', ''))))
+                else:
+                    tasks.append((idx, str(item)))
+        except Exception:
+            tasks = [(0, text)]
+    else:
+        tasks = [(0, text)]
+    if not tasks:
+        return {'sys':lang.lang['bot.tool.subagent.empty'],
+                'cli':lang.lang['cnmd.subagent.empty']}
+
+    launch = []
+    with _subagent_lock:
+        for num, tsk in tasks:
+            _subagent_seq += 1
+            tid = _subagent_seq
+            _subagent_jobs.append({
+                'id': tid,
+                'number': num,
+                'task': tsk,
+                'status': 'running',
+                'start': time.time(),
+                'end': None,
+                'report': None
+            })
+            launch.append((tid, num, tsk))
+        _trim_jobs()
+
+    def _worker(tid, num, tsk):
+        rep = ''
+        status = 'done'
+        try:
+            agent = _CNMD('sub_agent_base', subagent=True, number=num)
+            agent.CNMD(tsk)
+            rep = getattr(agent, 'report', '') or ''
+        except Exception as e:
+            status = 'error'
+            rep = f'{lang.lang['bot.tool.error']}{e}'
+        with _subagent_lock:
+            for j in _subagent_jobs:
+                if j['id'] == tid:
+                    j['status'] = status
+                    j['end'] = time.time()
+                    j['report'] = rep
+                    break
+            _subagent_reports.append({'number': num, 'report': rep})
+
+    for tid, num, tsk in launch:
+        threading.Thread(target=_worker, args=(tid, num, tsk),
+                         name=f'subagent-{tid}', daemon=True).start()
+
+    return {'sys':lang.lang['bot.tool.subagent.started'],
+            'cli':lang.lang['cnmd.subagent.running']}
+
+@method()
+def subagent_status(args:str=None):
+    """查询子代理任务状态。
+    无参数：列出全部任务；带参数：按任务序号(number)或任务ID(id)过滤。
+    """
+    with _subagent_lock:
+        jobs = copy.deepcopy(_subagent_jobs)
+    if args is not None and args.strip() != '':
+        key = args.strip()
+        jobs = [j for j in jobs if str(j['number']) == key or str(j['id']) == key]
+    if not jobs:
+        return {'sys':lang.lang['bot.tool.subagent.statusnone'],
+                'cli':lang.lang['bot.tool.subagent.statuslog']}
+    now = time.time()
+    lines = []
+    for j in jobs:
+        status = j['status']
+        start = time.strftime('%H:%M:%S', time.localtime(j['start']))
+        if j['end'] is not None:
+            cost = f'{j['end'] - j['start']:.1f}s'
+        else:
+            cost = f'{now - j['start']:.1f}s(running)'
+        task = j['task'].replace('\n', ' ')
+        if len(task) > 60:
+            task = f'{task[:60]}...'
+        lines.append(f'[id{j['id']}/#{j['number']}] {status} | {start} | {cost} | {task}')
+        if status != 'running' and j['report']:
+            rep = j['report'].strip()
+            if len(rep) > 500:
+                rep = f'{rep[:500]}...'
+            lines.append(f'    report: {rep}')
+    sys = f'{lang.lang['bot.tool.subagent.status']}\n' + '\n'.join(lines)
+    return {'sys':sys,
+            'cli':lang.lang['bot.tool.subagent.statuslog']}
