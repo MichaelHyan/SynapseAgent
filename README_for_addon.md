@@ -1,24 +1,38 @@
 ## Synapse Agent插件文档
 
-Synapse Agent支持程序调用和http server双控制逻辑。
+Synapse Agent 支持**程序调用**、**内置 HTTP 服务**与**插件（Addon）机制**三种扩展方式。
 
-### 程序调用
+---
 
-CNMD类位于./src/main/CNMD.py中。
+## 一、程序调用
 
-实例化CNMD对象，将自动创建消息队列，使用CNMD(指令)方法控制。
+CNMD 类位于 `./src/main/CNMD.py` 中。
 
-输出结果将写入到变量msg_stack，通过逐次读取来获取输出。
+实例化 CNMD 对象，将自动创建消息队列，使用 `CNMD(指令)` 方法控制。
+
+输出结果将写入到变量 `msg_stack`，通过逐次读取来获取输出。
 
 注意：
-- CNMD对象的回答循环有急停设置，将mslock属性设为False则在当轮拦截并退出循环。
-- CNMD对象拥有回答状态，status属性为1时表示未结束回答循环，结束后归零。
+- CNMD 对象的回答循环有急停设置，将 `mslock` 属性设为 `False` 则在当轮拦截并退出循环。
+- CNMD 对象拥有回答状态，`status` 属性为 1 时表示未结束回答循环，结束后归零。
 
-### http调用
+> `src/main/CNMD.py` 也可作为**启动入口**直接运行（`python src/main/CNMD.py [预设名]`），此时会自动切到项目根目录并以主程序方式拉起 `SynapseAgent.py`；作为模块被 `import` 时该入口逻辑不生效，不影响类调用。
 
-启动server.py后将自动实例化一个CNMD对象，同时开放127.0.0.1:56700/cnmd，可发送http post获取输出。
+---
 
-body参数：
+## 二、内置 HTTP 服务
+
+自本版本起，HTTP 服务**已整合进主程序**，启动 SynapseAgent（默认 `start.bat` → `python src\main\CNMD.py`）时自动开启，无需再单独运行 `server.py`。
+
+- 地址：`http://127.0.0.1:56700/cnmd`，**单端口**
+- **端口占用策略**：若 56700 已被占用，则不启用网络服务，主程序静默以纯 CLI 运行
+- **并发模型**：CLI 输入与网络 `ask` 共用同一任务队列，由唯一 worker 串行处理，同一时刻只跑一条任务
+- **输出分发**：
+  - 模型输出在 CLI 正常显示，同时**镜像**进**网络独立缓冲**，供网络端 `answer` 获取
+  - 网络端输入会在 CLI 以 `[NET Input]` 前缀原样显示，执行结束后与 CLI 一致显示结果
+- 网络端只从**独立缓冲**取回复，不干扰 CLI 输出；网络暂停指令 `#p` / `#pause` 直接释放 `mslock` 并返回 `paused`
+
+body 参数：
 ```json
 /*连通性测试*/
 {
@@ -43,7 +57,7 @@ body参数：
     "response": ""
 }
 
-/*接收信息，同时更新消息队列(接收队列中第一条信息，同时删除队列最晚的信息)*/
+/*接收信息：从网络缓冲取出最早一条回复*/
 {
     "method":"answer",
     "params":{
@@ -52,11 +66,11 @@ body参数：
 }
 /*返回结果*/
 {
-    "status": [回答状体],
+    "status": [回答状态],
     "response": [返回信息]
 }
 
-/*接收所有记录信息，不更改消息队列(接受整个消息队列)*/
+/*接收所有记录信息：读取整个网络缓冲，不消费*/
 {
     "method":"answer",
     "params":{
@@ -70,11 +84,7 @@ body参数：
 }
 ```
 
-回答状态表示agent当前是否在回答循环中，0表示不在循环状态，1表示循环中。
-
-rp模式下，如仍有未接受的信息，或Agent未结束作答，回答状态均返回1。
-
-rl模式下，回答状态仅表示Agent是否正在回答。
+回答状态表示 Agent 当前是否仍在处理，0 表示空闲，1 表示仍在处理（含队列未清空、缓冲未取完等情况）。
 
 调用示例(powershell)
 
@@ -87,29 +97,82 @@ Invoke-RestMethod -Uri "http://127.0.0.1:56700/cnmd" `
 
 由于回答进程和实际使用为异步关系，建议单开线程用于接收信息，固定时间访问输出结果。
 
-### 工具链穿透
+---
+
+## 三、插件（Addon）标准化
+
+### 目录与入口规范
+
+| 规则 | 约定 |
+|---|---|
+| 插件目录 | `addon/<插件名>/` |
+| 启动入口 | `addon/<插件名>/main.py`（固定） |
+| 启动清单 | `addon/config.json` 的 `enabled` 列表 |
+| 运行方式 | 由主程序以**独立控制台窗口（独立进程）**拉起 |
+
+`addon/config.json` 示例：
+
+```json
+{
+    "enabled": ["live2d"]
+}
+```
+
+主程序在**网络服务就绪之后**按清单逐个启动插件，等价于：
+
+```python
+subprocess.Popen(
+    [sys.executable, main_py],
+    cwd=插件目录,
+    creationflags=0x00000010  # CREATE_NEW_CONSOLE，单开窗口
+)
+```
+
+启动成功在 CLI 打印 `[ADDON] 已启动插件: <名>`；未找到 `main.py` 则打印跳过提示，不影响主程序。
+
+### 插件编写约定
+
+1. `main.py` 视为**独立程序入口**，需自行完成 `sys.path` 与工作目录设置，例如：
+   ```python
+   import os, sys
+   BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+   sys.path.insert(0, BASE_DIR)
+   os.chdir(BASE_DIR)   # 保证插件内相对路径（配置、模型、提示词）正确
+   ```
+2. 插件与主程序通过 `http://127.0.0.1:56700/cnmd` 通讯（即上面的 `ping / ask / answer`）。
+3. 插件是**独立进程**，关闭主程序**不会**自动结束插件窗口。
+4. 若主程序因端口占用未启用网络服务，插件将无法连接主程序——这是端口占用策略的**预期结果**。
+
+### 最小插件骨架
+
+```
+addon/
+├── config.json          # {"enabled": ["demo"]}
+└── demo/
+    └── main.py          # 固定入口
+```
+
+`addon/demo/main.py`：
+
+```python
+# -*- coding: utf-8 -*-
+import os, sys
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, BASE_DIR)
+os.chdir(BASE_DIR)
+
+def main():
+    # 在此实现插件逻辑，通过 HTTP 与主程序交互
+    print('demo addon started')
+
+if __name__ == '__main__':
+    main()
+```
+
+---
+
+## 四、工具链穿透
 
 你可以将自己的工具与原生工具混用，通过忽略表使工具调用指令穿透工具调用模块，直接发送到输出文本中。
 
-Synapse Agent使用指令区调用，指令区格式<tool_call>指令</tool_call>。
-
-启动前发送指令#skipable 指令名1 指令名2 ...以指定忽略表。如有需要也可以用于屏蔽某些原生工具。
-
-### 多模态传递
-
-使用base64编码多模态媒体文件或者url后，使用标签包裹并与文本一起发送。
-
-```bash
-<image>编码后的图片字符</image>
-<imageurl>图片url</imageurl>
-<audio>编码后的音频字符</audio>
-<audiourl>音频url</audiourl>
-<video>编码后的视频字符</video>
-<videourl>视频url</videourl>
-```
-
-### 提示词覆写
-
-你可以主动覆盖当前提示词，无需考虑原有预设提示词。
-
-使用指令#bot prompt PROMPTOVERWRITE 新提示词 来覆盖。
+Synapse Agent 使用指令区调用，指令区格式 `指令

@@ -1,3 +1,10 @@
+import os as _os, sys as _sys
+if __name__ == "__main__":
+    _ROOT = _os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
+    if _ROOT not in _sys.path:
+        _sys.path.insert(0, _ROOT)
+    _os.chdir(_ROOT)
+
 from src.tools import fileedit
 from src.tools import memory
 from prompt_loader import prompt
@@ -569,3 +576,7 @@ class CNMD():
         self.cmd_check = []
         self.status = 0
         return
+
+if __name__ == "__main__":
+    import runpy as _runpy
+    _runpy.run_path(_os.path.join(_ROOT, "SynapseAgent.py"), run_name="__main__")
