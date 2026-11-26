@@ -2,6 +2,7 @@ search_string.py
 test.py
 /logs
 /bak
+/addon
 /database
 /config/config_mcp.json
 /config/config.json
