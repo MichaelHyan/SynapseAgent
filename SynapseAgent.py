@@ -282,6 +282,11 @@ _POLL = 0.05
 _net_buffer = deque(maxlen=2000)
 _net_lock = threading.Lock()
 
+# 网络镜像会话开关（由 _net_lock 保护）：
+#   收到网络 ask -> 打开，此后模型输出才写入 _net_buffer；
+#   CLI 提交非空输入 -> 关闭，停止向网络缓存写入。
+_net_session = {'active': False}
+
 def _busy():
     """是否还有未完成的工作（用于向网络端汇报 status）。"""
     return (cnm.status != 0
@@ -399,6 +404,9 @@ def ask(content: str):
             "status": cnm.status,
             "response": "paused"
         }
+    # 收到网络信息：激活网络镜像，此后模型输出才写入网络缓存
+    with _net_lock:
+        _net_session['active'] = True
     # 投递到统一队列，由唯一 worker 串行执行
     _pending.put((content, 'net'))
     return {
@@ -510,6 +518,10 @@ def input_thread():
             continue
         stripped = text.strip()
         normalized = ''.join(text.split())   # 剔除所有空格和换行，用于 #exit / #pause 匹配
+        if stripped != '':
+            # CLI 有输入：关闭网络镜像，停止往网络缓存写入模型输出
+            with _net_lock:
+                _net_session['active'] = False
         if normalized == '#exit':
             print(_sep())
             os._exit(0)
@@ -529,9 +541,10 @@ def process_thread():
             sys.stdout.write('\r' + ' ' * 20 + '\r')
             sys.stdout.flush()
             first_element = cnm.msg_stack.pop(0)
-            # 网络端同步接收模型输出（独立缓冲）
+            # 仅当网络会话已激活（收到过网络信息）才镜像到网络缓存
             with _net_lock:
-                _net_buffer.append(first_element)
+                if _net_session['active']:
+                    _net_buffer.append(first_element)
             if cnm.msg_stack:
                 pass
             else:
