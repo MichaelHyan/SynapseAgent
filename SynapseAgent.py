@@ -8,7 +8,6 @@ if __name__ == "__main__":
 import src.tools.guide as guide
 import src.main.CNMD as CNMD
 import threading, time, copy, os, sys, argparse, queue, json, socket, subprocess
-import msvcrt
 import ctypes
 import unicodedata
 from collections import deque
@@ -40,53 +39,178 @@ BAR = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
 # Ctrl+P 急停信号的哨兵值（正常输入不可能产生该串）
 PAUSE_SIGNAL = '\x00__SYNAPSE_PAUSE__'
 
-# ---------- Windows 控制台光标辅助（用于跨行退格定位，不依赖 ANSI） ----------
-_kernel32 = ctypes.windll.kernel32
+# ================================================================ 跨平台终端辅助
+#   Windows：msvcrt 逐字符读取 + kernel32 控制台光标定位
+#   Linux  ：termios 关闭规范模式/回显/ICRNL + ANSI 转义序列控制光标
+IS_WIN = (os.name == 'nt')
 
-class _COORD(ctypes.Structure):
-    _fields_ = [("X", ctypes.c_short), ("Y", ctypes.c_short)]
-
-class _SMALL_RECT(ctypes.Structure):
-    _fields_ = [("Left", ctypes.c_short), ("Top", ctypes.c_short),
-                ("Right", ctypes.c_short), ("Bottom", ctypes.c_short)]
-
-class _CONSOLE_SCREEN_BUFFER_INFO(ctypes.Structure):
-    _fields_ = [("dwSize", _COORD),
-                ("dwCursorPosition", _COORD),
-                ("wAttributes", ctypes.c_ushort),
-                ("srWindow", _SMALL_RECT),
-                ("dwMaximumWindowSize", _COORD)]
-
-_kernel32.GetStdHandle.argtypes = [ctypes.c_uint32]
-_kernel32.GetStdHandle.restype = ctypes.c_void_p
-_hout = _kernel32.GetStdHandle(0xFFFFFFF5)  # STD_OUTPUT_HANDLE = -11
-
-_kernel32.GetConsoleScreenBufferInfo.argtypes = [ctypes.c_void_p, ctypes.POINTER(_CONSOLE_SCREEN_BUFFER_INFO)]
-_kernel32.GetConsoleScreenBufferInfo.restype = ctypes.c_int
-_kernel32.SetConsoleCursorPosition.argtypes = [ctypes.c_void_p, _COORD]
-_kernel32.SetConsoleCursorPosition.restype = ctypes.c_int
-
-def _get_cursor():
-    info = _CONSOLE_SCREEN_BUFFER_INFO()
-    _kernel32.GetConsoleScreenBufferInfo(_hout, ctypes.byref(info))
-    return info.dwCursorPosition.X, info.dwCursorPosition.Y
-
-def _set_cursor(x, y):
-    _kernel32.SetConsoleCursorPosition(_hout, _COORD(x, y))
 
 def _char_width(c):
     return 2 if unicodedata.east_asian_width(c) in ('W', 'F') else 1
 
+
 def _display_width(s):
     return sum(_char_width(c) for c in s)
 
+
+if IS_WIN:
+    import msvcrt
+
+    _kernel32 = ctypes.windll.kernel32
+
+    class _COORD(ctypes.Structure):
+        _fields_ = [("X", ctypes.c_short), ("Y", ctypes.c_short)]
+
+    class _SMALL_RECT(ctypes.Structure):
+        _fields_ = [("Left", ctypes.c_short), ("Top", ctypes.c_short),
+                    ("Right", ctypes.c_short), ("Bottom", ctypes.c_short)]
+
+    class _CONSOLE_SCREEN_BUFFER_INFO(ctypes.Structure):
+        _fields_ = [("dwSize", _COORD),
+                    ("dwCursorPosition", _COORD),
+                    ("wAttributes", ctypes.c_ushort),
+                    ("srWindow", _SMALL_RECT),
+                    ("dwMaximumWindowSize", _COORD)]
+
+    _kernel32.GetStdHandle.argtypes = [ctypes.c_uint32]
+    _kernel32.GetStdHandle.restype = ctypes.c_void_p
+    _hout = _kernel32.GetStdHandle(0xFFFFFFF5)  # STD_OUTPUT_HANDLE = -11
+
+    _kernel32.GetConsoleScreenBufferInfo.argtypes = [ctypes.c_void_p, ctypes.POINTER(_CONSOLE_SCREEN_BUFFER_INFO)]
+    _kernel32.GetConsoleScreenBufferInfo.restype = ctypes.c_int
+    _kernel32.SetConsoleCursorPosition.argtypes = [ctypes.c_void_p, _COORD]
+    _kernel32.SetConsoleCursorPosition.restype = ctypes.c_int
+
+    def _get_cursor():
+        info = _CONSOLE_SCREEN_BUFFER_INFO()
+        _kernel32.GetConsoleScreenBufferInfo(_hout, ctypes.byref(info))
+        return info.dwCursorPosition.X, info.dwCursorPosition.Y
+
+    def _set_cursor(x, y):
+        _kernel32.SetConsoleCursorPosition(_hout, _COORD(x, y))
+
+    # 回调到上一行末尾（跨行退格）
+    def _back_to_prev_line_end(prev_line):
+        _, y = _get_cursor()
+        _set_cursor(_display_width(prev_line), y - 1)
+
+    def _getch():
+        return msvcrt.getwch()
+
+    def _flush_escape():
+        msvcrt.getwch()
+
+    # Windows 语义：普通回车 \r 换行，Ctrl+Enter（\n）提交
+    _KEY_SUBMIT = '\n'
+    _KEY_NEWLINE = '\r'
+
+else:
+    import termios
+    import select
+    import atexit
+
+    _stdin_fd = sys.stdin.fileno()
+    _term_state = {'saved': None}
+
+    def _enter_cbreak():
+        """关闭规范模式/回显，并关闭 ICRNL 以便区分 Enter(\\r) 与 Ctrl+J(\\n)。
+        保留 OPOST|ONLCR，保证 print 换行正常；保留 ISIG，Ctrl+C 仍可中断。"""
+        if _term_state['saved'] is not None:
+            return
+        saved = termios.tcgetattr(_stdin_fd)
+        _term_state['saved'] = saved
+        new = termios.tcgetattr(_stdin_fd)
+        new[0] &= ~termios.ICRNL          # iflag
+        new[3] &= ~(termios.ICANON | termios.ECHO)  # lflag
+        new[6][termios.VMIN] = 1
+        new[6][termios.VTIME] = 0
+        termios.tcsetattr(_stdin_fd, termios.TCSADRAIN, new)
+
+    def _leave_cbreak():
+        saved = _term_state['saved']
+        if saved is None:
+            return
+        try:
+            termios.tcsetattr(_stdin_fd, termios.TCSADRAIN, saved)
+        except Exception:
+            pass
+        _term_state['saved'] = None
+
+    atexit.register(_leave_cbreak)
+
+    def _read_bytes(n):
+        data = b''
+        while len(data) < n:
+            r, _, _ = select.select([_stdin_fd], [], [], 0.2)
+            if not r:
+                continue
+            chunk = os.read(_stdin_fd, n - len(data))
+            if not chunk:
+                break
+            data += chunk
+        return data
+
+    def _getch():
+        """读取一个字符（自动拼接 UTF-8 多字节）"""
+        _enter_cbreak()
+        b = _read_bytes(1)
+        if not b:
+            return ''
+        lead = b[0]
+        if lead < 0x80:
+            return b.decode('latin-1')
+        if lead >> 5 == 0b110:
+            need = 1
+        elif lead >> 4 == 0b1110:
+            need = 2
+        elif lead >> 3 == 0b11110:
+            need = 3
+        else:
+            need = 0
+        if need:
+            b += _read_bytes(need)
+        return b.decode('utf-8', 'replace')
+
+    def _flush_escape():
+        """吞掉方向键/功能键的转义序列（ESC [ ... 或 ESC O x）"""
+        r, _, _ = select.select([_stdin_fd], [], [], 0.01)
+        if not r:
+            return
+        c1 = os.read(_stdin_fd, 1)
+        if c1 in (b'[', b'O'):
+            while True:
+                r, _, _ = select.select([_stdin_fd], [], [], 0.01)
+                if not r:
+                    break
+                c = os.read(_stdin_fd, 1)
+                if c.isalpha() or c == b'~':
+                    break
+
+    def _back_to_prev_line_end(prev_line):
+        """ANSI：上移一行 + 回到行首 + 右移到上一行末尾"""
+        w = _display_width(prev_line)
+        sys.stdout.write('\033[1A\r')
+        if w > 0:
+            sys.stdout.write(f'\033[{w}C')
+
+    # Linux 语义：Enter（\r）提交，Ctrl+J（\n）换行
+    _KEY_SUBMIT = '\r'
+    _KEY_NEWLINE = '\n'
+
+
 def read_input_block():
-    """逐字符读取：普通回车换行，Ctrl+Enter 提交，Ctrl+P 急停。返回提交的文本(含换行)或 PAUSE_SIGNAL。"""
+    """逐字符读取：可换行编辑，专用键提交，Ctrl+P 急停。
+    Windows：\\r 换行 / Ctrl+Enter(\\n) 提交
+    Linux  ：Ctrl+J(\\n) 换行 / Enter(\\r) 提交
+    返回提交的文本（含换行）或 PAUSE_SIGNAL。
+    """
     text = ''
     while True:
-        ch = msvcrt.getwch()
-        if ch in ('\x00', '\xe0'):      # 功能键/方向键前缀：吞掉后续扫描码
-            msvcrt.getwch()
+        ch = _getch()
+        if ch == '':
+            continue
+        if ch == '\x1b':                # ESC：功能键/方向键序列，整体吞掉
+            _flush_escape()
             continue
         if ch == '\x03':                # Ctrl+C
             raise KeyboardInterrupt
@@ -94,22 +218,22 @@ def read_input_block():
             sys.stdout.write('\r\n')
             sys.stdout.flush()
             return PAUSE_SIGNAL
-        if ch == '\n':                  # Ctrl+Enter：提交
+        if ch == _KEY_SUBMIT:           # 提交
             sys.stdout.write('\r\n')
             sys.stdout.flush()
             return text
-        if ch == '\r':                  # 普通回车：换行
+        if ch == _KEY_NEWLINE:          # 换行
             text += '\n'
             sys.stdout.write('\r\n')
             sys.stdout.flush()
             continue
-        if ch == '\b':                  # 退格
+        if ch in ('\b', '\x7f'):        # 退格（Linux 终端的退格是 0x7f）
             if text == '':
                 continue
             if text.endswith('\n'):     # 跨行退格：光标上移回上一行末尾
-                _, y = _get_cursor()
                 prev_line = text[:-1].split('\n')[-1]
-                _set_cursor(_display_width(prev_line), y - 1)
+                _back_to_prev_line_end(prev_line)
+                sys.stdout.flush()
                 text = text[:-1]
             else:                       # 行内退格（宽字符占 2 列）
                 w = _char_width(text[-1])
@@ -313,7 +437,7 @@ def answer(type='rp'):
         }
 
 class _ExclusiveHTTPServer(ThreadingHTTPServer):
-    """关闭 SO_REUSEADDR，确保 Windows 上端口被占用时 bind 会真正失败。"""
+    """关闭 SO_REUSEADDR，确保端口被占用时 bind 会真正失败。"""
     allow_reuse_address = False
     daemon_threads = True
 
@@ -341,7 +465,8 @@ def _start_server():
 
 # ================================================================ 插件启动
 def _start_addons():
-    """读取 addon/config.json 的 enabled 列表，逐个以独立控制台窗口启动插件。"""
+    """读取 addon/config.json 的 enabled 列表，逐个以独立进程启动插件。
+    Windows 下新开控制台窗口；类 Unix 下以独立进程组启动（不抢占当前终端）。"""
     cfg_path = os.path.join(ADDON_DIR, 'config.json')
     try:
         with open(cfg_path, encoding='utf-8') as f:
@@ -359,8 +484,10 @@ def _start_addons():
             continue
         try:
             kwargs = {'cwd': os.path.dirname(main_py)}
-            if os.name == 'nt':
+            if IS_WIN:
                 kwargs['creationflags'] = 0x00000010  # CREATE_NEW_CONSOLE：单开窗口
+            else:
+                kwargs['start_new_session'] = True    # 独立会话，不干扰当前终端
             subprocess.Popen([sys.executable, main_py], **kwargs)
             print(f'{Color.GREEN}[ADDON]{Color.RESET} 已启动插件: {name}')
         except Exception as exc:
@@ -442,7 +569,7 @@ if __name__ == "__main__":
     t_worker.start()
     # 网络服务（占用则静默跳过）
     _start_server()
-    # 插件（网络就绪后，独立窗口启动）
+    # 插件（网络就绪后启动）
     _start_addons()
     # CLI 线程
     t_input = threading.Thread(target=input_thread)

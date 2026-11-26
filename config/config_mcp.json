@@ -7,7 +7,12 @@
     "bocha-mcp": {
       "url": "https://mcp.bochaai.com/mcp",
       "headers": {
-        "Authorization": "Bearer sk-xxxx"
+        "Authorization": "Bearer sk-7060a94e0a754f019da61ad0107820db"
       }
+    },
+    "cnki-mcp": {
+        "command": "python",
+        "args": ["D:/git/cnki-mcp-master/cnki_mcp_server.py"],
+        "description": "CNKI（中国知网）学术论文检索 MCP 服务器，基于 FastMCP + Playwright。工具用法：search_cnki 按关键词/作者/标题/DOI 检索论文，可选 journal 参数经知网专业检索限定特定期刊（如“经济研究”“管理世界”）；get_paper_detail 传入论文 URL 获取完整元数据（摘要、作者、关键词、DOI、被引等）；download_paper_pdf 将论文 PDF 下载到本地目录（需机构 IP 权限）；find_best_match 从候选结果中匹配标题最接近的论文。示例：检索“人民币国际化”相关论文、检索《经济研究》中“人民币国际化”论文、获取某篇论文详情、下载该论文 PDF 到 D:/papers。"
     }
 }

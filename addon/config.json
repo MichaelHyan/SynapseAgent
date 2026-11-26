@@ -1,3 +1,4 @@
 {
-    "enabled": []
+    "enabled": [],
+    "disabled": ["taoism","qq","live2d"]
 }

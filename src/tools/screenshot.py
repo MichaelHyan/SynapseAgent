@@ -1,32 +1,41 @@
 import ctypes
-from ctypes import wintypes
 import io
 import base64
+import platform
 
-user32 = ctypes.windll.user32
-gdi32 = ctypes.windll.gdi32
-try:
-    ctypes.windll.shcore.SetProcessDpiAwareness(2)
-except Exception:
-    user32.SetProcessDPIAware()
-SM_XVIRTUALSCREEN, SM_YVIRTUALSCREEN = 76, 77
-SM_CXVIRTUALSCREEN, SM_CYVIRTUALSCREEN = 78, 79
-class BITMAPINFOHEADER(ctypes.Structure):
-    _fields_ = [
-        ("biSize", wintypes.DWORD),
-        ("biWidth", wintypes.LONG),
-        ("biHeight", wintypes.LONG),
-        ("biPlanes", wintypes.WORD),
-        ("biBitCount", wintypes.WORD),
-        ("biCompression", wintypes.DWORD),
-        ("biSizeImage", wintypes.DWORD),
-        ("biXPelsPerMeter", wintypes.LONG),
-        ("biYPelsPerMeter", wintypes.LONG),
-        ("biClrUsed", wintypes.DWORD),
-        ("biClrImportant", wintypes.DWORD),
-    ]
+IS_WIN = platform.system() == 'Windows'
 
-def grab_virtual_screen():
+if IS_WIN:
+    from ctypes import wintypes
+    user32 = ctypes.windll.user32
+    gdi32 = ctypes.windll.gdi32
+    try:
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)
+    except Exception:
+        try:
+            user32.SetProcessDPIAware()
+        except Exception:
+            pass
+    SM_XVIRTUALSCREEN, SM_YVIRTUALSCREEN = 76, 77
+    SM_CXVIRTUALSCREEN, SM_CYVIRTUALSCREEN = 78, 79
+
+    class BITMAPINFOHEADER(ctypes.Structure):
+        _fields_ = [
+            ("biSize", wintypes.DWORD),
+            ("biWidth", wintypes.LONG),
+            ("biHeight", wintypes.LONG),
+            ("biPlanes", wintypes.WORD),
+            ("biBitCount", wintypes.WORD),
+            ("biCompression", wintypes.DWORD),
+            ("biSizeImage", wintypes.DWORD),
+            ("biXPelsPerMeter", wintypes.LONG),
+            ("biYPelsPerMeter", wintypes.LONG),
+            ("biClrUsed", wintypes.DWORD),
+            ("biClrImportant", wintypes.DWORD),
+        ]
+
+
+def _grab_windows():
     from PIL import Image
     x = user32.GetSystemMetrics(SM_XVIRTUALSCREEN)
     y = user32.GetSystemMetrics(SM_YVIRTUALSCREEN)
@@ -54,6 +63,27 @@ def grab_virtual_screen():
     user32.ReleaseDC(hwin, hdc_src)
     return img
 
+
+def _grab_x11():
+    """非 Windows（X11）抓取整个虚拟屏幕。优先 mss，回退 PIL.ImageGrab。"""
+    try:
+        import mss
+        from PIL import Image
+        with mss.mss() as sct:
+            monitor = sct.monitors[0]  # 0 = 所有显示器组成的虚拟屏
+            raw = sct.grab(monitor)
+            return Image.frombytes("RGB", raw.size, raw.bgra, "raw", "BGRX")
+    except Exception:
+        from PIL import ImageGrab
+        return ImageGrab.grab()
+
+
+def grab_virtual_screen():
+    if IS_WIN:
+        return _grab_windows()
+    return _grab_x11()
+
+
 def capture_all_base64(fmt: str = "PNG", data_uri: bool = False, prefix = '') -> str:
     img = grab_virtual_screen()
     buf = io.BytesIO()
@@ -61,16 +91,26 @@ def capture_all_base64(fmt: str = "PNG", data_uri: bool = False, prefix = '') ->
     b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
     return f"<{prefix}>{b64}</{prefix}>"
 
+
 def get_screen_cord(cord = [0,0,0,0],index = 0,path='./database/screen.png'):
     import cv2
     import numpy as np
-    from PIL import ImageGrab
-    if cord == [0,0,0,0]:
-        screen = ImageGrab.grab()
-        offset_x, offset_y = 0, 0
+    if IS_WIN:
+        from PIL import ImageGrab
+        if cord == [0,0,0,0]:
+            screen = ImageGrab.grab()
+            offset_x, offset_y = 0, 0
+        else:
+            screen = ImageGrab.grab(bbox=(cord[0],cord[1],cord[2],cord[3]))
+            offset_x, offset_y = cord[0], cord[1]
     else:
-        screen = ImageGrab.grab(bbox=(cord[0],cord[1],cord[2],cord[3]))
-        offset_x, offset_y = cord[0], cord[1]
+        full = grab_virtual_screen()
+        if cord == [0,0,0,0]:
+            screen = full
+            offset_x, offset_y = 0, 0
+        else:
+            screen = full.crop((cord[0],cord[1],cord[2],cord[3]))
+            offset_x, offset_y = cord[0], cord[1]
     img = cv2.cvtColor(np.array(screen), cv2.COLOR_RGB2BGR)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 

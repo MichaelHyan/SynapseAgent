@@ -16,6 +16,7 @@ requests>=2.31.0       # HTTP 请求 (tools/downloader.py, tools/sender.py)
 opencv-python>=4.8.0   # 屏幕文字区域检测 (tools/screenshot.py: import cv2)
 pyautogui>=0.9.54      # 键鼠模拟 (tools/autogui.py, tools/pre_scanner.py)
 pillow>=10.0.0         # 屏幕截图抓取 (tools/screenshot.py: PIL.Image / ImageGrab)
+mss>=9.0.0             # 跨平台截图 (Linux/X11 下选取虚拟屏幕，screenshot.py 优先使用)
 pycryptodome>=3.19.0   # AES 加解密 (tools/downloader.py, tools/sender.py: Crypto.Cipher.AES)
 
 # ---------- 可选依赖 (optional) ----------
